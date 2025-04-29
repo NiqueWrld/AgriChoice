@@ -1,0 +1,306 @@
+﻿@model IEnumerable<AgriChoice.Models.Purchase>
+
+@{
+    ViewData["Title"] = "Manage Purchases";
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Manage Purchases
+        </h1>
+        <a asp-controller="Admin" asp-action="Dashboard" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="flex space-x-2 mb-2 sm:mb-0">
+                <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    All Purchases
+                </button>
+                <button class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Pending
+                </button>
+                <button class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Completed
+                </button>
+                <button class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Refunded
+                </button>
+            </div>
+            <div class="relative">
+                <input type="text" placeholder="Search purchases..." class="border border-gray-300 rounded-md px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Records -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Purchase ID
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Date
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Customer
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cow
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Payment Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Delivery Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @if (Model.Any())
+                    {
+                        @foreach (var purchase in Model)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        #@purchase.PurchaseId
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        @purchase.PurchaseDate.ToString("MMM dd, yyyy")
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        @purchase.PurchaseDate.ToString("h:mm tt")
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        @(purchase.User?.UserName ?? "Unknown User")
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        @purchase.UserId
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        @if (!string.IsNullOrEmpty(purchase.Cow?.ImageUrl))
+                                        {
+                                            <img class="h-10 w-10 rounded-full object-cover mr-2" src="@purchase.Cow.ImageUrl" alt="@purchase.Cow.Breed" />
+                                        }
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">
+                                                @(string.IsNullOrEmpty(purchase.Cow?.Name) ? purchase.Cow?.Breed : purchase.Cow?.Name)
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                ID: @purchase.CowId
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-900">
+                                        @(purchase.Cow?.Price.ToString("C") ?? "N/A")
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                   @* @{
+                                        var paymentStatusClass = purchase.PaymentStatus switch
+                                        {
+                                            AgriChoice.Models.Purchase.PaymentStatus.Completed => "bg-green-100 text-green-800",
+                                            AgriChoice.Models.Purchase.PaymentStatus.Pending => "bg-yellow-100 text-yellow-800",
+                                            AgriChoice.Models.Purchase.PaymentStatus.Refunded => "bg-red-100 text-red-800",
+                                            _ => "bg-gray-100 text-gray-800"
+                                        };
+                                    }
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @paymentStatusClass">
+                                        @purchase.PaymentStatus
+                            </span> *@
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @* @{
+                                        var deliveryStatusClass = purchase.DeliveryStatus?.ToLower() switch
+                                        {
+                                            "delivered" => "bg-green-100 text-green-800",
+                                            "in transit" => "bg-blue-100 text-blue-800",
+                                            "scheduled" => "bg-yellow-100 text-yellow-800",
+                                            _ => "bg-gray-100 text-gray-800"
+                                        };
+                                    }
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @deliveryStatusClass">
+                                        @purchase.DeliveryStatus
+                                    </span> *@
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div class="flex space-x-2">
+                                        <a href="#" class="text-indigo-600 hover:text-indigo-900"
+                                           onclick="openDetailsModal(@purchase.PurchaseId)">
+                                            View
+                                        </a>
+                                        <a href="#" class="text-green-600 hover:text-green-900"
+                                           onclick="openEditModal(@purchase.PurchaseId)">
+                                            Edit
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                                No purchases found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">1</span> to <span class="font-medium">@Model.Count()</span> of <span class="font-medium">@Model.Count()</span> results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-indigo-600 hover:bg-gray-50">1</a>
+                        <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Purchase Modal Template (hidden by default) -->
+<div id="editPurchaseModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal('editPurchaseModal')"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-indigo-600 px-4 py-3">
+                <h3 class="text-lg font-medium text-white" id="modal-title">Update Purchase Status</h3>
+            </div>
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <form id="editPurchaseForm">
+                    <input type="hidden" id="editPurchaseId" name="purchaseId" />
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                        <select id="paymentStatus" name="paymentStatus" class="w-full rounded-lg border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-2 px-3">
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Refunded">Refunded</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Status</label>
+                        <select id="deliveryStatus" name="deliveryStatus" class="w-full rounded-lg border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-2 px-3">
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In Transit">In Transit</option>
+                            <option value="Delivered">Delivered</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" 
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Save Changes
+                </button>
+                <button type="button" 
+                        onclick="closeModal('editPurchaseModal')"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Details Modal Template (hidden by default) -->
+<div id="purchaseDetailsModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal('purchaseDetailsModal')"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-indigo-600 px-4 py-3">
+                <h3 class="text-lg font-medium text-white">Purchase Details</h3>
+            </div>
+            <div id="purchaseDetailsContent" class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center py-10">
+                    <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-2 text-gray-600">Loading details...</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" 
+                        onclick="closeModal('purchaseDetailsModal')"
+                        class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto sm:text-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal functions
+    function openEditModal(purchaseId) {
+        document.getElementById('editPurchaseId').value = purchaseId;
+        document.getElementById('editPurchaseModal').classList.remove('hidden');
+    }
+    
+    function openDetailsModal(purchaseId) {
+        document.getElementById('purchaseDetailsModal').classList.remove('hidden');
+        // In a real app, you would fetch the purchase details via AJAX here
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+</script>

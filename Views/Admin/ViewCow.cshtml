@@ -1,0 +1,234 @@
+﻿@model AgriChoice.Models.Cow
+
+@{
+    ViewData["Title"] = "View Cow";
+}
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            View Cow Details
+        </h1>
+        <a asp-controller="Admin" asp-action="ManageCows" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Back to Manage Cows
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Image container with improved display -->
+        <div class="relative">
+            <!-- Main image with max height but preserving aspect ratio -->
+            <div class="max-h-96 flex justify-center bg-gray-100">
+                <img src="@Model.ImageUrl" 
+                     class="max-h-96 w-auto object-contain cursor-pointer" 
+                     alt="@Model.Breed"
+                     onclick="openImageModal('@Model.ImageUrl', '@(string.IsNullOrEmpty(Model.Name) ? Model.Breed : Model.Name)')" />
+            </div>
+            
+            <!-- Image zoom/expand indicator -->
+            <div class="absolute bottom-3 right-3">
+                <button type="button" 
+                        onclick="openImageModal('@Model.ImageUrl', '@(string.IsNullOrEmpty(Model.Name) ? Model.Breed : Model.Name)')"
+                        class="bg-white bg-opacity-75 rounded-full p-2 shadow-md hover:bg-opacity-100 transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M5 8a1 1 0 011-1h1V6a1 1 0 012 0v1h1a1 1 0 110 2H9v1a1 1 0 11-2 0V9H6a1 1 0 01-1-1z" />
+                        <path fill-rule="evenodd" d="M2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8zm6-4a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6 sm:p-8">
+            <div class="flex flex-wrap items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    @(string.IsNullOrEmpty(Model.Name) ? Model.Breed : Model.Name)
+                </h2>
+
+                @if (Model.IsAvailable)
+                {
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <svg class="-ml-1 mr-1.5 h-2 w-2 text-green-600" fill="currentColor" viewBox="0 0 8 8">
+                            <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        Available
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        <svg class="-ml-1 mr-1.5 h-2 w-2 text-red-600" fill="currentColor" viewBox="0 0 8 8">
+                            <circle cx="4" cy="4" r="3" />
+                        </svg>
+                        Sold Out
+                    </span>
+                }
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="space-y-3">
+                    <div class="flex justify-between border-b border-gray-200 pb-2">
+                        <span class="text-gray-600 font-medium">Breed:</span>
+                        <span class="text-gray-900">@Model.Breed</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-200 pb-2">
+                        <span class="text-gray-600 font-medium">Age:</span>
+                        <span class="text-gray-900">@Model.Age months</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-200 pb-2">
+                        <span class="text-gray-600 font-medium">Weight:</span>
+                        <span class="text-gray-900">@Model.Weight kg</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between border-b border-gray-200 pb-2 mb-3">
+                        <span class="text-gray-600 font-medium">Price:</span>
+                        <span class="text-xl font-bold text-indigo-700">@Model.Price.ToString("C")</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-3 mt-4">
+                        <h4 class="font-medium text-gray-700 mb-2">Cow ID:</h4>
+                        <span class="px-2 py-1 bg-gray-100 rounded text-gray-800 font-mono">@Model.CowId</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Description</h3>
+                <p class="text-gray-700 whitespace-pre-line">@(string.IsNullOrEmpty(Model.Description) ? "No description available." : Model.Description)</p>
+            </div>
+
+            <!-- Admin Actions -->
+            <div class="border-t border-gray-200 pt-6 flex flex-wrap gap-3 justify-start">
+                <a asp-controller="Admin" asp-action="EditCow" asp-route-id="@Model.CowId"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                </a>
+
+                <button type="button"
+                        onclick="toggleModal('deleteModal-@Model.CowId')"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                </button>
+
+                <!-- Delete Confirmation Modal -->
+                <div id="deleteModal-@Model.CowId" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <!-- Background overlay -->
+                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                             onclick="toggleModal('deleteModal-@Model.CowId')"></div>
+
+                        <!-- Modal panel -->
+                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                            <div class="bg-red-600 px-4 py-3">
+                                <h5 class="text-lg font-medium text-white" id="modal-title">Confirm Delete</h5>
+                            </div>
+                            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div class="sm:flex sm:items-start">
+                                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                        <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                        <div class="mt-2">
+                                            <p class="text-sm text-gray-700">
+                                                Are you sure you want to delete this @(string.IsNullOrEmpty(Model.Name) ? Model.Breed : Model.Name) cow? This action cannot be undone.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <form asp-controller="Admin" asp-action="DeleteCow" asp-route-id="@Model.CowId" method="post">
+                                    <button type="submit"
+                                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                        Delete
+                                    </button>
+                                </form>
+                                <button type="button"
+                                        onclick="toggleModal('deleteModal-@Model.CowId')"
+                                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Lightbox Modal -->
+<div id="imageModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="image-modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-90 transition-opacity" aria-hidden="true" onclick="closeImageModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-transparent rounded-lg text-left overflow-hidden transform transition-all max-w-3xl w-full">
+            <div class="relative">
+                <!-- Close button -->
+                <button type="button" 
+                        onclick="closeImageModal()" 
+                        class="absolute top-0 right-0 m-3 bg-white bg-opacity-75 rounded-full p-2 hover:bg-opacity-100 transition-opacity z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                
+                <!-- Image -->
+                <img id="modalImage" src="" alt="" class="max-h-[80vh] max-w-full object-contain mx-auto" />
+                
+                <!-- Image caption -->
+                <div class="mt-4 text-center">
+                    <h3 id="modalImageCaption" class="text-white text-lg font-medium"></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle modal visibility function
+    function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+    
+    // Open image modal
+    function openImageModal(imageUrl, caption) {
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalCaption = document.getElementById('modalImageCaption');
+        
+        modalImage.src = imageUrl;
+        modalImage.alt = caption;
+        modalCaption.textContent = caption;
+        
+        modal.classList.remove('hidden');
+    }
+    
+    // Close image modal
+    function closeImageModal() {
+        const modal = document.getElementById('imageModal');
+        modal.classList.add('hidden');
+    }
+</script>
