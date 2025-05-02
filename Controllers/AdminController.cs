@@ -22,7 +22,7 @@ namespace AgriChoice.Controllers
         {
             ViewData["TotalCows"] = _context.Cows.Count();
             ViewData["AvailableCows"] = _context.Cows.Count(c => c.IsAvailable);
-            ViewData["TotalOrders"] = _context.Purchases.Count();
+            ViewData["TotalPurchases"] = _context.Purchases.Count();
 
             return View();
         }
@@ -37,7 +37,7 @@ namespace AgriChoice.Controllers
         // Add a Cow (GET)
         public IActionResult AddCow()
         {
-            return View(); // Return the Add Cow form
+            return View(); 
         }
 
         // Add a Cow (POST)

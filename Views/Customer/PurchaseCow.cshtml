@@ -1,0 +1,144 @@
+﻿@model AgriChoice.Controllers.PurchaseViewModel
+
+@{
+    ViewData["Title"] = "Purchase Cow";
+}
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Complete Your Purchase
+        </h1>
+        <a asp-controller="Customer" asp-action="BrowseCows" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Back to Browse
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="md:grid md:grid-cols-3">
+            <!-- Cow Details Section -->
+            <div class="md:col-span-1 bg-gray-50 p-6">
+                <div class="space-y-6">
+                    <div class="relative h-48 rounded-lg overflow-hidden">
+                        <img src="@Model.Cow.ImageUrl" alt="@Model.Cow.Breed" class="w-full h-full object-cover" />
+                    </div>
+
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">@Model.Cow.Name</h2>
+                        <p class="text-sm text-gray-500">@Model.Cow.Breed</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Age:</span>
+                            <span class="text-sm font-medium text-gray-900">@Model.Cow.Age months</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Weight:</span>
+                            <span class="text-sm font-medium text-gray-900">@Model.Cow.Weight kg</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Price:</span>
+                            <span class="text-lg font-bold text-indigo-600">$@Model.Cow.Price</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-sm font-medium text-gray-900">Description</h3>
+                        <p class="mt-2 text-sm text-gray-600">@Model.Cow.Description</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Form Section -->
+            <div class="md:col-span-2 p-6">
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        Payment Details
+                    </h2>
+                    <p class="text-sm text-gray-600 mt-1">Please enter your payment information securely.</p>
+                </div>
+
+                <form asp-action="ConfirmPurchase" method="post" class="space-y-6">
+                    <input type="hidden" name="id" value="@Model.Cow.CowId" />
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="FullName" class="block text-base font-medium text-gray-700 mb-2">Full Name</label>
+                            <div class="mt-1">
+                                <input asp-for="FullName" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-lg border-gray-300 rounded-md px-4 py-3" placeholder="Enter name as it appears on card" />
+                                <span asp-validation-for="FullName" class="text-sm text-red-600 mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="CreditCardNumber" class="block text-base font-medium text-gray-700 mb-2">Credit Card Number</label>
+                            <div class="mt-1">
+                                <input asp-for="CreditCardNumber" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-lg border-gray-300 rounded-md px-4 py-3" placeholder="•••• •••• •••• ••••" />
+                                <span asp-validation-for="CreditCardNumber" class="text-sm text-red-600 mt-1"></span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="ExpirationDate" class="block text-base font-medium text-gray-700 mb-2">Expiration Date</label>
+                                <div class="mt-1">
+                                    <input asp-for="ExpirationDate" type="month" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-lg border-gray-300 rounded-md px-4 py-3" />
+                                    <span asp-validation-for="ExpirationDate" class="text-sm text-red-600 mt-1"></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="CVV" class="block text-base font-medium text-gray-700 mb-2">CVV</label>
+                                <div class="mt-1">
+                                    <input asp-for="CVV" type="number" maxlength="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full text-lg border-gray-300 rounded-md px-4 py-3" placeholder="•••" />
+                                    <span asp-validation-for="CVV" class="text-sm text-red-600 mt-1"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div>
+                            <p class="text-sm text-gray-500">Total Amount</p>
+                            <p class="text-2xl font-bold text-indigo-600">$@Model.Cow.Price</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <a asp-controller="Customer" asp-action="BrowseCows" class="inline-flex items-center px-5 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Cancel
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-5 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Complete Purchase
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="mt-6 flex items-center justify-center">
+                    <div class="flex items-center space-x-2 text-gray-500 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span>Secure payment processing</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

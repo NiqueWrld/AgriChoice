@@ -32,6 +32,14 @@ namespace AgriChoice.Models
         }
 
         [Required]
-        public string DeliveryStatus { get; set; } // "Scheduled", "In Transit", "Delivered"
+        public Deliverystatus DeliveryStatus { get; set; }
+
+        public enum Deliverystatus
+        {
+            Scheduled,
+            InTransit,
+            Delivered
+        }
+
     }
 }

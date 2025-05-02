@@ -127,32 +127,33 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                   @* @{
-                                        var paymentStatusClass = purchase.PaymentStatus switch
+                                    @{
+                                        var statusClass1 = purchase.PaymentStatus.ToString().ToLower() switch
                                         {
-                                            AgriChoice.Models.Purchase.PaymentStatus.Completed => "bg-green-100 text-green-800",
-                                            AgriChoice.Models.Purchase.PaymentStatus.Pending => "bg-yellow-100 text-yellow-800",
-                                            AgriChoice.Models.Purchase.PaymentStatus.Refunded => "bg-red-100 text-red-800",
+                                            "pending" => "bg-yellow-100 text-yellow-800",
+                                            "paid" => "bg-blue-100 text-blue-800",
+                                            "failed" => "bg-red-100 text-red-800",
                                             _ => "bg-gray-100 text-gray-800"
                                         };
                                     }
-                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @paymentStatusClass">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @statusClass1">
                                         @purchase.PaymentStatus
-                            </span> *@
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @* @{
-                                        var deliveryStatusClass = purchase.DeliveryStatus?.ToLower() switch
+                                    @{
+                                        var deliveryClass = purchase.DeliveryStatus.ToString().ToLower() switch
                                         {
                                             "delivered" => "bg-green-100 text-green-800",
-                                            "in transit" => "bg-blue-100 text-blue-800",
+                                            "intransit" => "bg-blue-100 text-blue-800",
                                             "scheduled" => "bg-yellow-100 text-yellow-800",
                                             _ => "bg-gray-100 text-gray-800"
                                         };
                                     }
-                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @deliveryStatusClass">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @deliveryClass">
                                         @purchase.DeliveryStatus
-                                    </span> *@
+                                    </span>
+
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div class="flex space-x-2">
