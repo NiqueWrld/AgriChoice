@@ -14,6 +14,9 @@ public class AgriChoiceContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Cow> Cows { get; set; }
     public DbSet<Purchase> Purchases { get; set; }
+    public DbSet<PurchaseCow> PurchaseCow { get; set; }
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<Delivery> Deliveries { get; set; }
 

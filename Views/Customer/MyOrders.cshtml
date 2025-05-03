@@ -57,21 +57,32 @@
                                             #@order.PurchaseId
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                @if (!string.IsNullOrEmpty(order.Cow?.ImageUrl))
+                                            @if (order.PurchaseCows != null && order.PurchaseCows.Any())
+                                            {
+                                                foreach (var item in order.PurchaseCows)
                                                 {
-                                                    <div class="flex-shrink-0 h-10 w-10">
-                                                        <img class="h-10 w-10 rounded-full object-cover" src="@order.Cow.ImageUrl" alt="@order.Cow.Name" />
+                                                    <div class="flex items-center mb-2">
+                                                        @if (!string.IsNullOrEmpty(item.Cow?.ImageUrl))
+                                                        {
+                                                            <div class="flex-shrink-0 h-10 w-10">
+                                                                <img class="h-10 w-10 rounded-full object-cover" src="@item.Cow.ImageUrl" alt="@item.Cow.Name" />
+                                                            </div>
+                                                        }
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">@item.Cow?.Name</div>
+                                                            <div class="text-sm text-gray-500">@item.Cow?.Breed</div>
+                                                        </div>
                                                     </div>
                                                 }
-                                                <div class="ml-4">
-                                                    <div class="text-sm font-medium text-gray-900">@order.Cow?.Name</div>
-                                                    <div class="text-sm text-gray-500">@order.Cow?.Breed</div>
-                                                </div>
-                                            </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-sm text-gray-500 italic">No cows</span>
+                                            }
                                         </td>
+
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">
-                                            @order.Cow?.Price.ToString("C")
+                                            @order.TotalPrice.ToString("C")
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @{

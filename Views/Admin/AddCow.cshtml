@@ -27,7 +27,7 @@
                         <div class="flex text-sm text-gray-600">
                             <label for="ImageUrl" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
                                 <span>Upload a file</span>
-                                <input id="ImageUrl" name="ImageUrl" type="file" class="sr-only" required/>
+                                <input id="ImageUrl" name="ImageUrl" type="file" accept="image/*" class="sr-only" required />
                             </label>
                             <p class="pl-1">or drag and drop</p>
                         </div>
@@ -81,7 +81,7 @@
 
             <!-- Price -->
             <div>
-                <label asp-for="Price" class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                <label asp-for="Price" class="block text-sm font-medium text-gray-700 mb-1">Price (R)</label>
                 <div class="relative mt-1 rounded-md shadow-sm">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <span class="text-gray-500 sm:text-sm">R</span>
@@ -103,20 +103,6 @@
                           required
                           class="w-full rounded-lg border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-2 px-3"></textarea>
                 <span asp-validation-for="Description" class="mt-1 text-sm text-red-600"></span>
-            </div>
-
-            <!-- Is Available -->
-            <div class="flex items-center">
-                <div class="flex items-center h-5">
-                    <input asp-for="IsAvailable"
-                           type="checkbox"
-                           checked
-                           class="h-5 w-5 rounded border-2 border-gray-400 text-indigo-600 focus:ring-indigo-500" />
-                </div>
-                <div class="ml-3 text-sm">
-                    <label asp-for="IsAvailable" class="font-medium text-gray-700">Available for Purchase</label>
-                    <p class="text-gray-500">Check if this cow is available for customers to purchase</p>
-                </div>
             </div>
 
             <!-- Submit Button -->

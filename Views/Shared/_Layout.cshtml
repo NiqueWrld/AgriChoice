@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AgriChoice</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @*<script src="https://cdn.tailwindcss.com"></script>*@
+    <script src="~/js/tailwind.js"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="flex flex-col min-h-screen">
@@ -14,7 +15,7 @@
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
                         <a asp-area="" asp-controller="Home" asp-action="Index" class="text-xl font-bold text-gray-800">AgriChoice</a>
-                    </div>
+                    </div> 
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
                         <!-- Common Links for All Users -->
                         <a asp-area="" asp-controller="Home" asp-action="Index" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Home</a>
@@ -40,6 +41,20 @@
 
                 <div class="hidden sm:ml-6 sm:flex sm:items-center">
                     <partial name="_LoginPartial" />
+                    @if (User.IsInRole("Customer"))
+                    {
+                        <div class="ml-4 relative">
+                            <button id="cartButton"
+                                    class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span id="cartItemCount"
+                                      class="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full transform scale-0 transition-transform duration-300"
+                                      aria-hidden="true">0</span>
+                            </button>
+                        </div>
+                    }
                 </div>
 
                 <!-- Mobile menu button -->
@@ -54,7 +69,7 @@
                 </div>
             </div>
 
-            <!-- Mobile menu, show/hide based on menu state -->
+            <!-- Mobile menu -->
             <div class="sm:hidden hidden" id="mobile-menu">
                 <div class="pt-2 pb-3 space-y-1">
                     <!-- Common Links for All Users -->
@@ -66,7 +81,6 @@
                     {
                         <a asp-area="" asp-controller="Admin" asp-action="Dashboard" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Dashboard</a>
                         <a asp-area="" asp-controller="Admin" asp-action="ManageCows" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Manage Cows</a>
-                        <a asp-area="" asp-controller="Admin" asp-action="Orders" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Orders</a>
                     }
 
                     <!-- Customer-Specific Links -->
@@ -74,7 +88,6 @@
                     {
                         <a asp-area="" asp-controller="Customer" asp-action="BrowseCows" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Browse Cows</a>
                         <a asp-area="" asp-controller="Customer" asp-action="MyOrders" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">My Orders</a>
-                        <a asp-area="" asp-controller="Customer" asp-action="Profile" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Profile</a>
                     }
 
                     <div class="pt-4 pb-3 border-t border-gray-200">
@@ -87,7 +100,7 @@
         </nav>
     </header>
 
-    <main class="flex-grow w-full ">
+    <main class="flex-grow w-full">
         @RenderBody()
     </main>
 
@@ -99,9 +112,183 @@
         </div>
     </footer>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- Cart Sidebar -->
+    <div id="cartSidebar" class="fixed inset-y-0 right-0 w-96 bg-gradient-to-b from-gray-50 to-white border-l border-gray-200 shadow-2xl z-50 overflow-y-auto transform translate-x-full transition-all duration-300 ease-in-out">
+        <div class="p-6 flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3z" />
+                    </svg>
+                    My Cart
+                </h2>
+                <button id="closeCart" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Cart Items -->
+            <div id="cartItemsContainer" class="flex-grow mt-6 space-y-5 overflow-y-auto pr-2">
+                <!-- Cart items will be dynamically added here -->
+                <div class="text-gray-500 italic text-center py-10">Your cart is empty</div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="mt-6 pt-4 border-t border-gray-100">
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span class="font-medium" id="cartSubtotal">R0.00</span>
+                </div>
+                <div class="flex justify-between mb-4">
+                    <span class="text-gray-600">Shipping</span>
+                    <span class="font-medium" id="cartShipping">R0.00</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span id="cartTotal">R0.00</span>
+                </div>
+
+                <div class="mt-6 space-y-3">
+                    <a asp-controller="Customer" asp-action="Checkout" class="w-full inline-flex justify-center items-center py-3 px-4 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                        Secure Checkout
+                    </a>
+                    <button id="continueShopping" class="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        Continue Shopping
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="cartOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 hidden"></div>
+
     <script>
-        // Mobile menu toggle
+
+
+
+                document.addEventListener('DOMContentLoaded', () => {
+            const cartButton = document.getElementById('cartButton');
+            const cartSidebar = document.getElementById('cartSidebar');
+            const cartOverlay = document.getElementById('cartOverlay');
+            const cartItemsContainer = document.getElementById('cartItemsContainer');
+            const cartItemCount = document.getElementById('cartItemCount');
+
+            // Function to fetch cart data
+            async function fetchCart() {
+                try {
+                    const response = await fetch('/api/cart');
+                    const data = await response.json();
+
+                    console.log(data)
+                     console.log(data.totalItems)
+
+                    // Update cart count
+                    if (data.totalItems > 0) {
+                        cartItemCount.textContent = data.totalItems;
+                        cartItemCount.classList.remove('hidden');
+                    } else {
+                        cartItemCount.classList.add('hidden');
+                    }
+
+                     const subTotal = data.subTotal.toLocaleString('en-ZA', {
+                                    style: 'currency',
+                                    currency: 'ZAR'
+                                });
+
+                    const shippingFee = data.shippingFee.toLocaleString('en-ZA', {
+                                    style: 'currency',
+                                    currency: 'ZAR'
+                                });
+
+                    const total = (data.shippingFee +  data.subTotal).toLocaleString('en-ZA', {
+                                    style: 'currency',
+                                    currency: 'ZAR'
+                                });
+
+                    document.getElementById("cartSubtotal").innerHTML = subTotal;
+                    document.getElementById("cartShipping").innerHTML = shippingFee;
+                    document.getElementById("cartTotal").innerHTML = total;
+
+                    // Populate cart items
+                    cartItemsContainer.innerHTML = '';
+                            if (data.items && data.items.length > 0) {
+                                data.items.forEach(item => {
+
+                                const price = item.cowPrice.toLocaleString('en-ZA', {
+                                    style: 'currency',
+                                    currency: 'ZAR'
+                                });
+
+
+                    const itemElement = `
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">${item.cowName}</p>
+                                    <p class="text-sm text-gray-500">${item.cowBreed}</p>
+                                    <p class="text-sm font-semibold text-indigo-600">${price}</p>
+                                </div>
+                                <button class="text-red-600 hover:text-red-800 text-sm font-medium" onclick="removeFromCart(${item.CartItemId})">Remove</button>
+                            </div>
+                        </div>`;
+                    cartItemsContainer.insertAdjacentHTML('beforeend', itemElement);
+                });
+
+                    } else {
+                        cartItemsContainer.innerHTML = `
+                            <div class="flex flex-col items-center justify-center mt-12">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                                <p class="mt-4 text-sm text-gray-500">Your cart is empty.</p>
+                            </div>`;
+                    }
+                } catch (error) {
+                    console.error('Error fetching cart data:', error);
+                }
+            }
+
+            function toggleCartSidebar() {
+                            const cartSidebar = document.getElementById('cartSidebar');
+                            const cartOverlay = document.getElementById('cartOverlay');
+                            const isHidden = cartSidebar.classList.contains('translate-x-full');
+                            if (isHidden) {
+                                        fetchCart();
+                                cartSidebar.classList.remove('translate-x-full');
+                                cartOverlay.classList.remove('hidden');
+                            } else {
+                                cartSidebar.classList.add('translate-x-full');
+                                cartOverlay.classList.add('hidden');
+                            }
+                        }
+
+            // Function to remove an item from the cart
+            async function removeFromCart(cartItemId) {
+                try {
+                    await fetch(`/Customer/RemoveFromCart/${cartItemId}`, { method: 'POST' });
+                    fetchCart(); // Refresh cart after removal
+                } catch (error) {
+                    console.error('Error removing item from cart:', error);
+                }
+            }
+
+            // Attach toggle function to cart button
+            cartButton.addEventListener('click', toggleCartSidebar);
+            cartOverlay.addEventListener('click', toggleCartSidebar);
+
+            // Fetch cart on page load
+            fetchCart();
+        });
+    </script>
+
+    <script>
         document.getElementById('mobile-menu-button').addEventListener('click', function () {
             const mobileMenu = document.getElementById('mobile-menu');
             mobileMenu.classList.toggle('hidden');

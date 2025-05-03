@@ -4,6 +4,8 @@ using AgriChoice.Models;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Azure.Core;
+using System.Security.Claims;
 
 namespace AgriChoice.Controllers
 {
@@ -43,7 +45,8 @@ namespace AgriChoice.Controllers
         {
             var currentUserName = User.Identity.Name;
             var orders = _context.Purchases
-                .Include(o => o.Cow)
+                .Include(o => o.PurchaseCows)
+                .ThenInclude(o => o.Cow)
                 .Where(o => o.User.UserName == currentUserName)
                 .ToList();
 
@@ -61,52 +64,176 @@ namespace AgriChoice.Controllers
             return View(order);
         }
 
-        public IActionResult PurchaseCow(int id)
+        public IActionResult Checkout()
         {
-            var cow = _context.Cows.FirstOrDefault(c => c.CowId == id);
-            if (cow == null || !cow.IsAvailable)
-            {
-                return NotFound();
-            }
+            var currentUserId = _userManager.GetUserId(User);
 
-            var model = new PurchaseViewModel
-            {
-                Cow = cow
-            };
+            var cart = _context.Carts
+                    .Include(c => c.Items)
+                    .ThenInclude(ci => ci.Cow)
+                    .FirstOrDefault(c => c.UserId == currentUserId);
 
-            return View(model);
+            return View(cart);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmPurchase(int id)
+        public async Task<IActionResult> AddToCart(int id)
         {
-         
-
             var currentUserId = _userManager.GetUserId(User);
-            var cow = _context.Cows.FirstOrDefault(c => c.CowId == id);
 
-            if (cow == null || !cow.IsAvailable)
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                return NotFound();
+                // Find the cow by ID
+                var cow = await _context.Cows.FirstOrDefaultAsync(c => c.CowId == id);
+
+                if (cow == null || !cow.IsAvailable)
+                {
+                    return NotFound();
+                }
+
+                // Find or create the user's cart
+                var cart = await _context.Carts
+                    .Include(c => c.Items)
+                    .ThenInclude(c => c.Cow)
+                    .FirstOrDefaultAsync(c => c.UserId == currentUserId);
+
+                if (cart == null)
+                {
+                    cart = new Cart
+                    {
+                        UserId = currentUserId,
+                        DeliveryAddress = "undefined",
+                        DateCreated = DateTime.UtcNow,
+                        Items = new List<CartItem>()
+                    };
+
+                    _context.Carts.Add(cart);
+                }
+
+                // Check if the item is already in the cart
+                if (cart.Items.Any(i => i.CowId == id))
+                {
+                    return Json(new { success = false, message = "This cow is already in your cart." });
+                }
+
+                // Check if cart already has 4 items
+                if (cart.Items.Count >= 4)
+                {
+                    return Json(new { success = false, message = "You cannot add more than 4 items to your cart." });
+                }
+
+                // Add the cow to the cart as a CartItem
+                var cartItem = new CartItem
+                {
+                    CowId = cow.CowId,
+                    Cart = cart,
+                    DateAdded = DateTime.UtcNow,
+                    Cow = cow
+                };
+
+                cart.Items.Add(cartItem);
+
+                cart.SubTotal = cart.Items.Sum(item => item.Cow.Price);
+                cart.ShippingCost = cart.Items.Count * 500;
+                cart.TotalCost = cart.SubTotal + cart.ShippingCost;
+
+                // Save changes to the database
+                await _context.SaveChangesAsync();
+
+                // Commit the transaction
+                await transaction.CommitAsync();
+            }
+
+            return Json(new { success = true, message = "Cow added to cart successfully!" });
+        }
+
+        public class RemoveCartItemRequest
+        {
+            public int Id { get; set; }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFromCart([FromBody] RemoveCartItemRequest request)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+
+            // Find the user's cart
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                .ThenInclude(ci => ci.Cow)
+                .FirstOrDefaultAsync(c => c.UserId == currentUserId);
+
+            if (cart == null)
+            {
+                return Json(new { success = false, message = "Cart not found." });
+            }
+
+            // Find the item to remove by CowId
+            var itemToRemove = cart.Items.FirstOrDefault(i => i.CowId == request.Id);
+
+            if (itemToRemove == null)
+            {
+                return Json(new { success = false, message = "Cow not found in cart." + request.Id });
+            }
+
+            _context.CartItems.Remove(itemToRemove);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Cow removed from cart successfully." });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout(string deliveryAddress)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                    .ThenInclude(ci => ci.Cow)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (cart == null || cart.Items.Count == 0)
+            {
+                return RedirectToAction("Cart");
             }
 
             var purchase = new Purchase
             {
-                CowId = cow.CowId,
-                UserId = currentUserId,
+                UserId = userId,
+                TotalPrice = cart.TotalCost,
                 PurchaseDate = DateTime.UtcNow,
-                PaymentStatus = Purchase.Paymentstatus.Pending,
-                DeliveryStatus = Purchase.Deliverystatus.Scheduled
+                PaymentStatus = Purchase.Paymentstatus.Completed,
+                DeliveryStatus = Purchase.Deliverystatus.Scheduled,
+                DeliveryAddress = "hiuuiu",
+                PurchaseCows = new List<PurchaseCow>()
             };
 
+            foreach (var item in cart.Items)
+            {
+                item.Cow.IsAvailable = false;
+
+                var purchaseCow = new PurchaseCow
+                {
+                    CowId = item.CowId,
+                    Purchase = purchase
+                };
+
+                purchase.PurchaseCows.Add(purchaseCow);
+            }
+
             _context.Purchases.Add(purchase);
-            cow.IsAvailable = false; // Optional: Mark cow as sold
+
+            // Remove cart items and clear the cart
+            _context.CartItems.RemoveRange(cart.Items);
+
             await _context.SaveChangesAsync();
 
+            TempData["Success"] = "Your purchase was completed successfully!";
             return RedirectToAction("MyOrders");
         }
-
 
 
         // GET: Customer/ViewCow/{id}

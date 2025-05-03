@@ -60,6 +60,7 @@ namespace AgriChoice.Controllers
                 }
             }
 
+            model.IsAvailable = true;
 
             // Save the Cow to the database (pseudo-code)
             _context.Cows.Add(model);
@@ -139,7 +140,8 @@ namespace AgriChoice.Controllers
         {
             // Retrieve all purchases with related cow and user information
             var purchases = await _context.Purchases
-                .Include(p => p.Cow)
+                .Include(p => p.PurchaseCows)
+                .ThenInclude(p => p.Cow)
                 .Include(p => p.User)
                 .OrderByDescending(p => p.PurchaseDate)
                 .ToListAsync();

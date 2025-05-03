@@ -83,19 +83,12 @@
                     {
                         @foreach (var purchase in Model)
                         {
-                            <tr class="hover:bg-gray-50">
+                            <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">
-                                        #@purchase.PurchaseId
-                                    </div>
+                                    <div class="text-sm text-gray-900 font-medium">#@purchase.PurchaseId</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
-                                        @purchase.PurchaseDate.ToString("MMM dd, yyyy")
-                                    </div>
-                                    <div class="text-xs text-gray-500">
-                                        @purchase.PurchaseDate.ToString("h:mm tt")
-                                    </div>
+                                    <div class="text-sm text-gray-900 font-medium">@purchase.PurchaseDate.ToString("yyyy-MM-dd")</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
@@ -106,25 +99,31 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        @if (!string.IsNullOrEmpty(purchase.Cow?.ImageUrl))
+                                    @if (purchase.PurchaseCows != null && purchase.PurchaseCows.Any())
+                                    {
+                                        foreach (var cow in purchase.PurchaseCows)
                                         {
-                                            <img class="h-10 w-10 rounded-full object-cover mr-2" src="@purchase.Cow.ImageUrl" alt="@purchase.Cow.Breed" />
+                                            <div class="flex items-center mb-2">
+                                                @if (!string.IsNullOrEmpty(cow.Cow?.ImageUrl))
+                                                { 
+                                                    <img class="h-10 w-10 rounded-full object-cover mr-2" src="@cow.Cow.ImageUrl" alt="@cow.Cow.Breed" />
+                                                }
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        @(string.IsNullOrEmpty(cow.Cow?.Name) ? cow.Cow?.Breed : cow.Cow?.Name)
+                                                    </div>
+                                                    <div class="text-xs text-gray-500">ID: @cow.CowId</div>
+                                                </div>
+                                            </div>
                                         }
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">
-                                                @(string.IsNullOrEmpty(purchase.Cow?.Name) ? purchase.Cow?.Breed : purchase.Cow?.Name)
-                                            </div>
-                                            <div class="text-xs text-gray-500">
-                                                ID: @purchase.CowId
-                                            </div>
-                                        </div>
-                                    </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-sm text-gray-500 italic">No cows</span>
+                                    }
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-semibold text-gray-900">
-                                        @(purchase.Cow?.Price.ToString("C") ?? "N/A")
-                                    </div>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    @purchase.TotalPrice.ToString("C")
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @{
@@ -153,7 +152,6 @@
                                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @deliveryClass">
                                         @purchase.DeliveryStatus
                                     </span>
-
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div class="flex space-x-2">
@@ -169,6 +167,7 @@
                                 </td>
                             </tr>
                         }
+
                     }
                     else
                     {
@@ -224,7 +223,7 @@
             <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
                 <form id="editPurchaseForm">
                     <input type="hidden" id="editPurchaseId" name="purchaseId" />
-                    
+
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
                         <select id="paymentStatus" name="paymentStatus" class="w-full rounded-lg border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-2 px-3">
@@ -233,7 +232,7 @@
                             <option value="Refunded">Refunded</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Status</label>
                         <select id="deliveryStatus" name="deliveryStatus" class="w-full rounded-lg border-2 border-gray-400 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-2 px-3">
@@ -245,11 +244,11 @@
                 </form>
             </div>
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" 
+                <button type="button"
                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
                     Save Changes
                 </button>
-                <button type="button" 
+                <button type="button"
                         onclick="closeModal('editPurchaseModal')"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
                     Cancel
@@ -279,7 +278,7 @@
                 </div>
             </div>
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" 
+                <button type="button"
                         onclick="closeModal('purchaseDetailsModal')"
                         class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto sm:text-sm">
                     Close
@@ -295,12 +294,12 @@
         document.getElementById('editPurchaseId').value = purchaseId;
         document.getElementById('editPurchaseModal').classList.remove('hidden');
     }
-    
+
     function openDetailsModal(purchaseId) {
         document.getElementById('purchaseDetailsModal').classList.remove('hidden');
         // In a real app, you would fetch the purchase details via AJAX here
     }
-    
+
     function closeModal(modalId) {
         document.getElementById(modalId).classList.add('hidden');
     }

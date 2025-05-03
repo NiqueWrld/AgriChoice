@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
+using AgriChoice.Models;
+using System.Linq;
 
 namespace AgriChoice.Data
 {
@@ -9,11 +11,10 @@ namespace AgriChoice.Data
     {
         public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
         {
-            // Get required services
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var context = serviceProvider.GetRequiredService<AgriChoiceContext>();
 
-            // Define the roles to seed
             string[] roles = { "Admin", "Customer" };
 
             // Seed roles
@@ -53,21 +54,83 @@ namespace AgriChoice.Data
             var customerUser = await userManager.FindByEmailAsync(customerEmail);
             if (customerUser == null)
             {
-                var newCutomer = new IdentityUser
+                var newCustomer = new IdentityUser
                 {
                     UserName = customerEmail,
                     Email = customerEmail,
                     EmailConfirmed = true
                 };
 
-                var result = await userManager.CreateAsync(newCutomer, customerPassword);
+                var result = await userManager.CreateAsync(newCustomer, customerPassword);
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(newCutomer, "Customer");
+                    await userManager.AddToRoleAsync(newCustomer, "Customer");
                 }
             }
 
+            // Seed Cow data
+            if (!context.Cows.Any())
+            {
+                context.Cows.AddRange(
+                    new Cow
+                    {
+                        Name = "Bella",
+                        Breed = "Holstein",
+                        Age = 4,
+                        Weight = 600.5,
+                        Price = 1500.00M,
+                        Description = "High milk yield",
+                        ImageUrl = "/images/cows/bella.jpg",
+                        IsAvailable = true
+                    },
+                    new Cow
+                    {
+                        Name = "Luna",
+                        Breed = "Jersey",
+                        Age = 3,
+                        Weight = 550.0,
+                        Price = 1300.00M,
+                        Description = "Calm temperament",
+                        ImageUrl = "/images/cows/luna.jpg",
+                        IsAvailable = true
+                    },
+                    new Cow
+                    {
+                        Name = "Daisy",
+                        Breed = "Guernsey",
+                        Age = 5,
+                        Weight = 620.3,
+                        Price = 1400.00M,
+                        Description = "Good butterfat content",
+                        ImageUrl = "/images/cows/daisy.jpg",
+                        IsAvailable = true
+                    },
+                    new Cow
+                    {
+                        Name = "Rosie",
+                        Breed = "Ayrshire",
+                        Age = 2,
+                        Weight = 500.2,
+                        Price = 1200.00M,
+                        Description = "Young and healthy",
+                        ImageUrl = "/images/cows/rosie.jpg",
+                        IsAvailable = true
+                    },
+                    new Cow
+                    {
+                        Name = "Molly",
+                        Breed = "Brown Swiss",
+                        Age = 6,
+                        Weight = 700.1,
+                        Price = 1600.00M,
+                        Description = "Experienced milker",
+                        ImageUrl = "/images/cows/molly.jpg",
+                        IsAvailable = true 
+                    }
+                );
 
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
