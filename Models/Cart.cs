@@ -13,7 +13,7 @@ namespace AgriChoice.Models
         public decimal TotalCost { get; set; }
 
         [Required]
-        public string UserId { get; set; } // Links to the user
+        public string UserId { get; set; } 
         public IdentityUser User { get; set; }
 
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;

@@ -15,7 +15,7 @@ namespace AgriChoice.Data
             var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
             var context = serviceProvider.GetRequiredService<AgriChoiceContext>();
 
-            string[] roles = { "Admin", "Customer" };
+            string[] roles = { "Admin", "Customer" , "Driver" };
 
             // Seed roles
             foreach (var role in roles)
@@ -68,6 +68,27 @@ namespace AgriChoice.Data
                 }
             }
 
+            // Seed customer user
+            string driverEmail = "driver@agri-choice.com";
+            string driverPassword = "Driver@123";
+
+            var driverUser = await userManager.FindByEmailAsync(driverEmail);
+            if (driverUser == null)
+            {
+                var newDriver = new IdentityUser
+                {
+                    UserName = driverEmail,
+                    Email = driverEmail,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(newDriver, driverPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(newDriver, "Driver");
+                }
+            }
+
             // Seed Cow data
             if (!context.Cows.Any())
             {
@@ -78,9 +99,9 @@ namespace AgriChoice.Data
                         Breed = "Holstein",
                         Age = 4,
                         Weight = 600.5,
-                        Price = 1500.00M,
+                        Price = 11800.00M,
                         Description = "High milk yield",
-                        ImageUrl = "/images/cows/bella.jpg",
+                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
                         IsAvailable = true
                     },
                     new Cow
@@ -89,9 +110,9 @@ namespace AgriChoice.Data
                         Breed = "Jersey",
                         Age = 3,
                         Weight = 550.0,
-                        Price = 1300.00M,
+                        Price = 12150.00M,
                         Description = "Calm temperament",
-                        ImageUrl = "/images/cows/luna.jpg",
+                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Jersey_cattle_calf_and_cow.jpg/1200px-Jersey_cattle_calf_and_cow.jpg",
                         IsAvailable = true
                     },
                     new Cow
@@ -100,9 +121,9 @@ namespace AgriChoice.Data
                         Breed = "Guernsey",
                         Age = 5,
                         Weight = 620.3,
-                        Price = 1400.00M,
+                        Price = 11950.00M,
                         Description = "Good butterfat content",
-                        ImageUrl = "/images/cows/daisy.jpg",
+                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/f/fe/Guernsey_cow.jpg",
                         IsAvailable = true
                     },
                     new Cow
@@ -111,9 +132,9 @@ namespace AgriChoice.Data
                         Breed = "Ayrshire",
                         Age = 2,
                         Weight = 500.2,
-                        Price = 1200.00M,
+                        Price = 12200.00M,
                         Description = "Young and healthy",
-                        ImageUrl = "/images/cows/rosie.jpg",
+                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/8/87/Ayrshire_cow.jpg",
                         IsAvailable = true
                     },
                     new Cow
@@ -122,15 +143,15 @@ namespace AgriChoice.Data
                         Breed = "Brown Swiss",
                         Age = 6,
                         Weight = 700.1,
-                        Price = 1600.00M,
+                        Price = 12050.00M,
                         Description = "Experienced milker",
-                        ImageUrl = "/images/cows/molly.jpg",
-                        IsAvailable = true 
+                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/7/7d/Brown_Swiss_cow.jpg",
+                        IsAvailable = true
                     }
                 );
-
                 await context.SaveChangesAsync();
             }
+
         }
     }
 }

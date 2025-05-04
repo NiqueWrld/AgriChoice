@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AgriChoice.Migrations
 {
     [DbContext(typeof(AgriChoiceContext))]
-    [Migration("20250503145929_initial2")]
-    partial class initial2
+    [Migration("20250504151121_init5")]
+    partial class init5
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -136,22 +136,36 @@ namespace AgriChoice.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DeliveryId"));
 
-                    b.Property<int>("DeliveryStatus")
+                    b.Property<string>("CurrentLocation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DeliveryCompletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DriverId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DropOffPin")
                         .HasColumnType("int");
 
-                    b.Property<int>("PurchaseId")
+                    b.Property<int>("PickUpPin")
                         .HasColumnType("int");
+
+                    b.Property<bool?>("PickedUp")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("PickupDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("TrackingUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("DeliveryId");
 
-                    b.HasIndex("PurchaseId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Deliveries");
                 });
@@ -193,6 +207,9 @@ namespace AgriChoice.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("DeliveryId")
+                        .HasColumnType("int");
+
                     b.Property<int>("DeliveryStatus")
                         .HasColumnType("int");
 
@@ -210,6 +227,8 @@ namespace AgriChoice.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("PurchaseId");
+
+                    b.HasIndex("DeliveryId");
 
                     b.HasIndex("UserId");
 
@@ -473,13 +492,11 @@ namespace AgriChoice.Migrations
 
             modelBuilder.Entity("AgriChoice.Models.Delivery", b =>
                 {
-                    b.HasOne("AgriChoice.Models.Purchase", "Purchase")
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
-                        .HasForeignKey("PurchaseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
-                    b.Navigation("Purchase");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("AgriChoice.Models.Document", b =>
@@ -495,11 +512,17 @@ namespace AgriChoice.Migrations
 
             modelBuilder.Entity("AgriChoice.Models.Purchase", b =>
                 {
+                    b.HasOne("AgriChoice.Models.Delivery", "Delivery")
+                        .WithMany()
+                        .HasForeignKey("DeliveryId");
+
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Delivery");
 
                     b.Navigation("User");
                 });

@@ -14,7 +14,7 @@ namespace AgriChoice.Models
         public string UserId { get; set; }
         public IdentityUser User { get; set; }
 
-        public string DeliveryId { get; set; }
+        public int? DeliveryId { get; set; }
         public Delivery Delivery { get; set; }
 
         public List<PurchaseCow> PurchaseCows { get; set; }
@@ -24,6 +24,9 @@ namespace AgriChoice.Models
 
         [Required]
         public string DeliveryAddress { get; set; }
+
+        [Required]
+        public decimal ShippingCost { get; set; }
 
         [Required]
         public decimal TotalPrice { get; set; }

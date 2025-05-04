@@ -36,6 +36,14 @@
                             <a asp-area="" asp-controller="Customer" asp-action="MyOrders" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">My Orders</a>
                             <a asp-area="" asp-controller="Customer" asp-action="Profile" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Profile</a>
                         }
+
+                        <!-- Driver-Specific Links -->
+                        @if (User.IsInRole("Driver"))
+                        {
+                            <a asp-area="" asp-controller="Driver" asp-action="AssignedJobs" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Assigned Jobs</a>
+                            <a asp-area="" asp-controller="Driver" asp-action="PastJobs" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Past Jobs</a>
+                            <a asp-area="" asp-controller="Driver" asp-action="Wallet" class="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700">Wallet</a>
+                        }
                     </div>
                 </div>
 
@@ -45,13 +53,13 @@
                     {
                         <div class="ml-4 relative">
                             <button id="cartButton"
-                                    class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                            class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 <span id="cartItemCount"
-                                      class="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full transform scale-0 transition-transform duration-300"
-                                      aria-hidden="true">0</span>
+                                class="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full transform scale-0 transition-transform duration-300"
+                                aria-hidden="true">0</span>
                             </button>
                         </div>
                     }
@@ -88,6 +96,13 @@
                     {
                         <a asp-area="" asp-controller="Customer" asp-action="BrowseCows" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Browse Cows</a>
                         <a asp-area="" asp-controller="Customer" asp-action="MyOrders" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">My Orders</a>
+                    }
+
+                    <!-- Driver-Specific Links -->
+                    @if (User.IsInRole("Driver"))
+                    {
+                        <a asp-area="" asp-controller="Driver" asp-action="AssignedJobs" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Assigned Jobs</a>
+                        <a asp-area="" asp-controller="Driver" asp-action="Wallet" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800">Wallet</a>
                     }
 
                     <div class="pt-4 pb-3 border-t border-gray-200">
@@ -169,11 +184,10 @@
     <!-- Overlay -->
     <div id="cartOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 hidden"></div>
 
-    <script>
-
-
-
-                document.addEventListener('DOMContentLoaded', () => {
+    @if (User.IsInRole("Customer"))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
             const cartButton = document.getElementById('cartButton');
             const cartSidebar = document.getElementById('cartSidebar');
             const cartOverlay = document.getElementById('cartOverlay');
@@ -287,6 +301,7 @@
             fetchCart();
         });
     </script>
+    }
 
     <script>
         document.getElementById('mobile-menu-button').addEventListener('click', function () {

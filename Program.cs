@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using AgriChoice.Data;
+using Braintree;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +18,22 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 .AddRoles<IdentityRole>() // Enable role management
 .AddEntityFrameworkStores<AgriChoiceContext>();
 
+// ?? Register Braintree Gateway as Singleton
+builder.Services.AddSingleton<BraintreeGateway>(serviceProvider =>
+{
+    var configuration = builder.Configuration.GetSection("Braintree");
+
+    return new BraintreeGateway(
+        configuration["Environment"] ?? "sandbox",  // Default to sandbox if not set
+        configuration["MerchantId"] ?? throw new InvalidOperationException("Missing MerchantId"),
+        configuration["PublicKey"] ?? throw new InvalidOperationException("Missing PublicKey"),
+        configuration["PrivateKey"] ?? throw new InvalidOperationException("Missing PrivateKey")
+    );
+});
+
 // Add services to the container
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<AgriChoice.Services.PaymentService>();
 builder.Services.AddRazorPages(); // Add Razor Pages support
 
 var app = builder.Build();

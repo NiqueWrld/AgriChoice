@@ -4,6 +4,7 @@ using AgriChoice.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AgriChoice.Migrations
 {
     [DbContext(typeof(AgriChoiceContext))]
-    partial class AgriChoiceContextModelSnapshot : ModelSnapshot
+    [Migration("20250504140626_init2")]
+    partial class init2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -136,9 +139,6 @@ namespace AgriChoice.Migrations
                     b.Property<string>("CurrentLocation")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DeliveryCompletedDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("DriverId")
                         .HasColumnType("nvarchar(max)");
 
@@ -150,9 +150,6 @@ namespace AgriChoice.Migrations
 
                     b.Property<bool?>("PickedUp")
                         .HasColumnType("bit");
-
-                    b.Property<DateTime>("PickupDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("ScheduledDate")
                         .HasColumnType("datetime2");

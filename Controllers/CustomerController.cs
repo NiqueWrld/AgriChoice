@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Core;
 using System.Security.Claims;
+using System;
 
 namespace AgriChoice.Controllers
 {
@@ -41,28 +42,39 @@ namespace AgriChoice.Controllers
             return View(cows.ToList());
         }
 
-        public IActionResult MyOrders(int id)
+        public IActionResult MyOrders()
         {
             var currentUserName = User.Identity.Name;
             var orders = _context.Purchases
                 .Include(o => o.PurchaseCows)
                 .ThenInclude(o => o.Cow)
                 .Where(o => o.User.UserName == currentUserName)
+                .OrderByDescending(o => o.PurchaseDate)
                 .ToList();
 
             return View(orders);
         }
 
-        public IActionResult MyOrders2(int id)
+        public IActionResult ViewOrderDetails(int id)
         {
-            var order = _context.Purchases.FirstOrDefault(o => o.PurchaseId == id);
-            if (order == null || order.User.UserName != User.Identity.Name)
+            if(id == null)
             {
-                return Unauthorized();
+                return NotFound();
             }
+
+            var currentUserName = User.Identity.Name;
+
+            var order = _context.Purchases
+                .Include(o => o.PurchaseCows)
+                .ThenInclude(o => o.Cow)
+                .FirstOrDefault(o => o.User.UserName == currentUserName && o.PurchaseId == id);
+   
 
             return View(order);
         }
+
+        
+
 
         public IActionResult Checkout()
         {
@@ -184,9 +196,22 @@ namespace AgriChoice.Controllers
             return Json(new { success = true, message = "Cow removed from cart successfully." });
         }
 
+        public class CheckoutRequest
+        {
+            public string FullName { get; set; }
+            public string AddressLine1 { get; set; }
+            public string AddressLine2 { get; set; }
+            public string City { get; set; }
+            public string State { get; set; }
+            public string ZipCode { get; set; }
+            public string Phone { get; set; }
+            public string PaymentMethodNonce { get; set; }
+        }
+
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Checkout(string deliveryAddress)
+        public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -200,6 +225,23 @@ namespace AgriChoice.Controllers
                 return RedirectToAction("Cart");
             }
 
+            Random random = new Random();
+
+            // Create delivery with no driver and scheduled for 3 days from now
+            var delivery = new Delivery
+            {
+                DriverId = null,
+                CurrentLocation = null, // or set an initial value if needed
+                ScheduledDate = DateTime.UtcNow.AddDays(3),
+                User = await _userManager.FindByIdAsync(userId),
+                PickedUp = false,
+                PickUpPin = random.Next(1000, 10000),
+                DropOffPin = random.Next(1000, 10000)
+            };
+
+            _context.Deliveries.Add(delivery);
+            await _context.SaveChangesAsync(); // Save to get the DeliveryId
+
             var purchase = new Purchase
             {
                 UserId = userId,
@@ -207,7 +249,8 @@ namespace AgriChoice.Controllers
                 PurchaseDate = DateTime.UtcNow,
                 PaymentStatus = Purchase.Paymentstatus.Completed,
                 DeliveryStatus = Purchase.Deliverystatus.Scheduled,
-                DeliveryAddress = "hiuuiu",
+                DeliveryAddress = request.AddressLine1,
+                DeliveryId = delivery.DeliveryId,
                 PurchaseCows = new List<PurchaseCow>()
             };
 
@@ -225,14 +268,11 @@ namespace AgriChoice.Controllers
             }
 
             _context.Purchases.Add(purchase);
-
-            // Remove cart items and clear the cart
             _context.CartItems.RemoveRange(cart.Items);
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Your purchase was completed successfully!";
-            return RedirectToAction("MyOrders");
+            return Json(new { success = true, message = "Your purchase was completed successfully!" });
         }
 
 

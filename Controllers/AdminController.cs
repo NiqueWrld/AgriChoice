@@ -4,6 +4,7 @@ using AgriChoice.Data;
 using AgriChoice.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AgriChoice.Controllers
 {
@@ -37,7 +38,7 @@ namespace AgriChoice.Controllers
         // Add a Cow (GET)
         public IActionResult AddCow()
         {
-            return View(); 
+            return View();
         }
 
         // Add a Cow (POST)
@@ -86,39 +87,39 @@ namespace AgriChoice.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult EditCow(Cow model, IFormFile ImageUrl)
         {
-           
-                var existingCow = _context.Cows.FirstOrDefault(c => c.CowId == model.CowId);
-                if (existingCow == null)
+
+            var existingCow = _context.Cows.FirstOrDefault(c => c.CowId == model.CowId);
+            if (existingCow == null)
+            {
+                return NotFound();
+            }
+
+            // Update fields
+            existingCow.Name = model.Name;
+            existingCow.Breed = model.Breed;
+            existingCow.Age = model.Age;
+            existingCow.Weight = model.Weight;
+            existingCow.Price = model.Price;
+            existingCow.Description = model.Description;
+            existingCow.IsAvailable = model.IsAvailable;
+
+            // Handle image upload (optional)
+            if (ImageUrl != null && ImageUrl.Length > 0)
+            {
+                using (var memoryStream = new MemoryStream())
                 {
-                    return NotFound();
+                    ImageUrl.CopyTo(memoryStream);
+                    byte[] imageBytes = memoryStream.ToArray();
+                    string base64Image = Convert.ToBase64String(imageBytes);
+
+                    // Optionally prepend the data URI scheme if you need to render it directly in HTML
+                    existingCow.ImageUrl = $"data:{ImageUrl.ContentType};base64,{base64Image}";
                 }
+            }
 
-                // Update fields
-                existingCow.Name = model.Name;
-                existingCow.Breed = model.Breed;
-                existingCow.Age = model.Age;
-                existingCow.Weight = model.Weight;
-                existingCow.Price = model.Price;
-                existingCow.Description = model.Description;
-                existingCow.IsAvailable = model.IsAvailable;
+            _context.SaveChanges();
+            return RedirectToAction("ManageCows");
 
-                // Handle image upload (optional)
-                if (ImageUrl != null && ImageUrl.Length > 0)
-                {
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        ImageUrl.CopyTo(memoryStream);
-                        byte[] imageBytes = memoryStream.ToArray();
-                        string base64Image = Convert.ToBase64String(imageBytes);
-
-                        // Optionally prepend the data URI scheme if you need to render it directly in HTML
-                        existingCow.ImageUrl = $"data:{ImageUrl.ContentType};base64,{base64Image}";
-                    }
-                }
-
-                _context.SaveChanges();
-                return RedirectToAction("ManageCows");
-    
         }
 
         // Delete a Cow (POST)
@@ -140,14 +141,85 @@ namespace AgriChoice.Controllers
         {
             // Retrieve all purchases with related cow and user information
             var purchases = await _context.Purchases
+                .Include(p => p.Delivery)
                 .Include(p => p.PurchaseCows)
                 .ThenInclude(p => p.Cow)
                 .Include(p => p.User)
                 .OrderByDescending(p => p.PurchaseDate)
                 .ToListAsync();
 
+            var freeDrivers = from user in _context.Users
+                              join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                              join role in _context.Roles on userRole.RoleId equals role.Id
+                              where role.Name == "Driver" &&
+                                    !_context.Purchases.Any(purchase => purchase.Delivery.DriverId == user.Id && purchase.DeliveryStatus != Purchase.Deliverystatus.Delivered)
+                              select user;
+
+            var freeDriversList = freeDrivers.ToList();
+
+            ViewBag.Drivers = freeDriversList;
+
             return View(purchases);
         }
+
+        public class AssignDriverRequest
+        {
+            public int PurchaseId { get; set; }
+            public string DriverId { get; set; }
+        }
+
+        [HttpPost]
+        public ActionResult AssignDriver([FromBody] AssignDriverRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            var purchase = _context.Purchases.Include(p => p.Delivery).FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
+            if (purchase == null || purchase.Delivery == null)
+            {
+                return NotFound("Purchase or delivery not found.");
+            }
+
+            purchase.Delivery.DriverId = request.DriverId;
+            _context.SaveChanges();
+
+            return Ok("Driver assigned successfully.");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ValidatePin([FromBody] PinRequest request)
+        {
+
+            var purchase = _context.Purchases
+                .Include(p => p.Delivery)
+                .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
+
+            if(purchase == null)
+            {
+                return NotFound();
+            }
+
+            if (request.Pin == purchase.Delivery.PickUpPin) 
+            {
+                purchase.DeliveryStatus = Purchase.Deliverystatus.InTransit;
+                purchase.Delivery.PickedUp = true;
+                purchase.Delivery.PickupDate = DateTime.UtcNow;
+                _context.SaveChanges();
+                return Json(new { success = true });
+            }
+
+            return Json(new { success = false });
+        }
+
+        public class PinRequest
+        {
+            public int Pin { get; set; }
+            public int PurchaseId { get; set; }
+        }
+
 
         public IActionResult ViewCow(int id)
         {

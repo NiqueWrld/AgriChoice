@@ -1,0 +1,386 @@
+﻿@model AgriChoice.Models.Purchase
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Order Details
+        </h1>
+        <a asp-action="OrderHistory" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Back to Orders
+        </a>
+    </div>
+
+    <!-- Order Summary Card -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg leading-6 font-medium text-gray-900">Order Summary</h2>
+                <div class="flex items-center space-x-3">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full
+                        @(Model.PaymentStatus.ToString() == "Paid" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                        @Model.PaymentStatus
+                    </span>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full
+                        @(Model.DeliveryStatus.ToString() == "Completed" ? "bg-green-100 text-green-800" :
+                          Model.DeliveryStatus.ToString() == "InTransit" ? "bg-blue-100 text-blue-800" :
+                          "bg-yellow-100 text-yellow-800")">
+                        @Model.DeliveryStatus
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div class="bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Order ID</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">#@Model.PurchaseId</dd>
+                </div>
+                <div class="bg-white px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Purchase Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.PurchaseDate.ToString("MMMM dd, yyyy")</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Total Amount</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.TotalPrice.ToString("C")</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Purchased Cows -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Your Purchased Cows</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Details about the cows you have purchased.</p>
+        </div>
+        <div class="overflow-hidden overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Image
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Name & Details
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Age & Weight
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Breed
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var item in Model.PurchaseCows)
+                    {
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if (!string.IsNullOrEmpty(item.Cow.ImageUrl))
+                                {
+                                    <img class="h-16 w-16 rounded-lg object-cover" src="@item.Cow.ImageUrl" alt="@item.Cow.Name" />
+                                }
+                                else
+                                {
+                                    <div class="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                }
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">@item.Cow.Name</div>
+                                <div class="text-sm text-gray-500">ID: #@item.Cow.CowId</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">@item.Cow.Age months</div>
+                                <div class="text-sm text-gray-500">@item.Cow.Weight kg</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">@item.Cow.Breed</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                @item.Cow.Price.ToString("C")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="bg-gray-50">
+                    <tr>
+                        <td colspan="4" class="px-6 py-3 text-right text-sm font-medium text-gray-500">
+                            Total
+                        </td>
+                        <td class="px-6 py-3 text-sm font-medium text-gray-900">
+                            @Model.TotalPrice.ToString("C")
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Order Details Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Delivery Information -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                <h2 class="text-lg leading-6 font-medium text-gray-900">Delivery Information</h2>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-y-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Delivery Address</dt>
+                        <dd class="mt-1 text-sm text-gray-900">@Model.DeliveryAddress</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Delivery Status</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                @(Model.DeliveryStatus.ToString() == "Completed" ? "bg-green-100 text-green-800" :
+                                Model.DeliveryStatus.ToString() == "InTransit" ? "bg-blue-100 text-blue-800" :
+                                "bg-yellow-100 text-yellow-800")">
+                                @Model.DeliveryStatus
+                            </span>
+                        </dd>
+                    </div>
+                    @if (Model.Delivery != null)
+                    {
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Scheduled Date</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                @(Model.Delivery.ScheduledDate.ToString("MMMM dd, yyyy") ?? "Not scheduled yet")
+                            </dd>
+                        </div>
+                        @if (Model.Delivery.PickedUp == true)
+                        {
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Picked Up</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    @(Model.Delivery.PickupDate.ToString("MMMM dd, yyyy - h:mm tt") ?? "Not picked up yet")
+                                </dd>
+                            </div>
+                        }
+                        @if (Model.DeliveryStatus.ToString() == "Completed")
+                        {
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Delivered On</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    @(Model.Delivery.DeliveryCompletedDate.ToString("MMMM dd, yyyy - h:mm tt") ?? "Not delivered yet")
+                                </dd>
+                            </div>
+                        }
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <!-- Payment Information -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                <h2 class="text-lg leading-6 font-medium text-gray-900">Payment Information</h2>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-y-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Payment Status</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                @(Model.PaymentStatus.ToString() == "Paid" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                @Model.PaymentStatus
+                            </span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Subtotal</dt>
+                        <dd class="mt-1 text-sm text-gray-900">@((Model.TotalPrice - (Model.ShippingCost)).ToString("C"))</dd>
+                    </div>
+                    @if (Model.ShippingCost != null)
+                    {
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Delivery Fee</dt>
+                            <dd class="mt-1 text-sm text-gray-900">@Model.ShippingCost.ToString("C")</dd>
+                        </div>
+                    }
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500 font-bold">Total</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-bold">@Model.TotalPrice.ToString("C")</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Timeline -->
+    <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Order Timeline</h2>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+            <div class="flow-root">
+                <ul role="list" class="-mb-8">
+                    <!-- Order Placed -->
+                    <li>
+                        <div class="relative pb-8">
+                            <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                            <div class="relative flex space-x-3">
+                                <div>
+                                    <span class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center ring-8 ring-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="min-w-0 flex-1 pt-1.5 space-y-1">
+                                    <p class="font-medium text-gray-900">Order Placed</p>
+                                    <p class="text-sm text-gray-500">@Model.PurchaseDate.ToString("MMMM dd, yyyy - h:mm tt")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- Payment Confirmed (if paid) -->
+                    @if (Model.PaymentStatus.ToString() == "Paid")
+                    {
+                        <li>
+                            <div class="relative pb-8">
+                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 space-y-1">
+                                        <p class="font-medium text-gray-900">Payment Confirmed</p>
+                                        <p class="text-sm text-gray-500">@(Model.PurchaseDate.AddMinutes(5).ToString("MMMM dd, yyyy - h:mm tt"))</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+
+                    <!-- Pickup (if picked up) -->
+                    @if (Model.Delivery?.PickedUp == true)
+                    {
+                        <li>
+                            <div class="relative pb-8">
+                                <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-2a1 1 0 00-1-1H4a1 1 0 01-1-1V6a1 1 0 011-1h1.05a2.5 2.5 0 014.9 0H15a1 1 0 011 1v2a1 1 0 01-1 1h-5a1 1 0 001 1h3.05a2.5 2.5 0 014.9 0H19a1 1 0 001-1v-4a1 1 0 00-1-1h-5.05a2.5 2.5 0 00-4.9 0H3z" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 space-y-1">
+                                        <p class="font-medium text-gray-900">Order Picked Up</p>
+                                        <p class="text-sm text-gray-500">@Model.Delivery.PickupDate.ToString("MMMM dd, yyyy - h:mm tt")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+
+                    <!-- Delivery (based on status) -->
+                    @if (Model.DeliveryStatus.ToString() == "Completed")
+                    {
+                        <li>
+                            <div class="relative">
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 space-y-1">
+                                        <p class="font-medium text-gray-900">Order Delivered</p>
+                                        <p class="text-sm text-gray-500">@Model.Delivery?.DeliveryCompletedDate.ToString("MMMM dd, yyyy - h:mm tt")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else if (Model.DeliveryStatus.ToString() == "InTransit")
+                    {
+                        <li>
+                            <div class="relative">
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 space-y-1">
+                                        <p class="font-medium text-gray-900">Order In Transit</p>
+                                        <p class="text-sm text-gray-500">Estimated delivery on @Model.Delivery?.ScheduledDate.ToString("MMMM dd, yyyy")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        <li>
+                            <div class="relative">
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center ring-8 ring-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 space-y-1">
+                                        <p class="font-medium text-gray-900">Order Scheduled</p>
+                                        <p class="text-sm text-gray-500">Estimated delivery on @Model.Delivery?.ScheduledDate.ToString("MMMM dd, yyyy")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3">
+        @if (Model.DeliveryStatus.ToString() != "Completed")
+        {
+            <a href="#" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+                Contact Support
+            </a>
+        }
+        <a asp-action="OrderHistory" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            Back to All Orders
+        </a>
+    </div>
+</div>

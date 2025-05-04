@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace AgriChoice.Models
 {
@@ -7,23 +8,27 @@ namespace AgriChoice.Models
         [Key]
         public int DeliveryId { get; set; }
 
-        [Required]
-        public int PurchaseId { get; set; }
-        public Purchase Purchase { get; set; }
+        public string? CurrentLocation { get; set; }
 
-       
+        public string? DriverId { get; set; }
+
+        [Required]
+        public int PickUpPin { get; set; }
+
+        [Required]
+        public int DropOffPin { get; set; }
+
+        public IdentityUser? User { get; set; }
+        public bool? PickedUp { get; set; }
+
         public DateTime ScheduledDate { get; set; }
 
-        public string TrackingUrl { get; set; } // Optional tracking link
+        public DateTime DeliveryCompletedDate { get; set; }
 
-        [Required]
-        public Deliverystatus DeliveryStatus { get; set; }
-        public enum Deliverystatus
-        {
-            Pending,
-            InProgress,
-            Completed
-        }
+        public DateTime PickupDate { get; set; }
+
+
+        
 
     }
 }

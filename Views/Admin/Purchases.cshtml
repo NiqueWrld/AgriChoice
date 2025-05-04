@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<AgriChoice.Models.Purchase>
+@using Microsoft.AspNetCore.Identity;
 
 @{
     ViewData["Title"] = "Manage Purchases";
@@ -155,14 +156,32 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div class="flex space-x-2">
-                                        <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                                           onclick="openDetailsModal(@purchase.PurchaseId)">
-                                            View
-                                        </a>
-                                        <a href="#" class="text-green-600 hover:text-green-900"
-                                           onclick="openEditModal(@purchase.PurchaseId)">
-                                            Edit
-                                        </a>
+                                        @if (purchase.DeliveryStatus.ToString() == "Scheduled")
+                                        {
+                                            if (purchase.Delivery?.DriverId == null)
+                                            {
+                                                <div class="mt-2">
+                                                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    onclick="openAssignDriverModal(@purchase.PurchaseId)">
+                                                        Assign Driver
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="mt-2">
+                                                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    onclick="openConfirmPickUpModal(@purchase.PurchaseId)">
+                                                        Confirm Pick Up
+                                                    </button>
+                                                </div>
+                                            }
+                                        }
+                                        else if (purchase.DeliveryStatus.ToString() == "InTransit")
+                                        {
+                                            
+                                        } 
+
                                     </div>
                                 </td>
                             </tr>
@@ -288,6 +307,193 @@
     </div>
 </div>
 
+<!-- Assign Driver Modal Template (hidden by default) -->
+<div id="assignDriverModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal('assignDriverModal')"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-indigo-600 px-4 py-3">
+                <h3 class="text-lg font-medium text-white" id="modal-title">Assign Driver</h3>
+            </div>
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <p class="text-sm text-gray-700 mb-4">Select a driver to assign to this purchase:</p>
+                <ul class="divide-y divide-gray-200">
+                    @if (ViewBag.Drivers != null && ((List<IdentityUser>)ViewBag.Drivers).Any())
+                    {
+                        foreach (var driver in (List<IdentityUser>)ViewBag.Drivers)
+                        {
+                            <li class="py-2 flex items-center justify-between">
+                                <span class="text-sm text-gray-900">@driver.UserName</span>
+                                <button class="bg-indigo-600 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        onclick="assignDriverToPurchase('@driver.Id')">
+                                    Assign
+                                </button>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="py-2 text-sm text-gray-500 italic">No available drivers found.</li>
+                    }
+                </ul>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button"
+                        onclick="closeModal('assignDriverModal')"
+                        class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto sm:text-sm">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow"></div>
+
+<div id="confirmPickUpModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal('confirmPickUpModal')"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="bg-indigo-600 px-4 py-3">
+                <h3 class="text-lg font-medium text-white" id="modal-title">Confirm Pick Up</h3>
+            </div>
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <p class="text-sm text-gray-700 mb-4">Enter 4-digit PIN to confirm pickup:</p>
+                <input type="text" id="pickupPinInput" maxlength="4" pattern="\d{4}" inputmode="numeric"
+                       class="w-full border border-gray-300 rounded-md px-4 py-2 text-center text-lg tracking-widest"
+                       placeholder="••••" />
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:justify-end">
+                <button type="button"
+                        onclick="confirmPickupWithPin()"
+                        class="mr-2 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Confirm
+                </button>
+                <button type="button"
+                        onclick="closeModal('confirmPickUpModal')"
+                        class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<form method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+<script>
+    let selectedPurchaseId = null;
+
+    function openAssignDriverModal(purchaseId) {
+        selectedPurchaseId = purchaseId;
+        document.getElementById('assignDriverModal').classList.remove('hidden');
+    }
+
+    function openConfirmPickUpModal(purchaseId) {
+        selectedPurchaseId = purchaseId;
+        document.getElementById('confirmPickUpModal').classList.remove('hidden');
+    }
+
+    function confirmPickupWithPin() {
+        const pin = document.getElementById('pickupPinInput').value.trim();
+
+        if (!/^\d{4}$/.test(pin)) {
+            alert('Please enter a valid 4-digit PIN.');
+            return;
+        }
+
+        fetch('/Admin/ValidatePin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify({ pin: pin, purchaseId: selectedPurchaseId })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                closeModal('confirmPickUpModal');
+                showToast("Pickup confirmed!");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+            } else {
+                showToast('Invalid PIN. Please try again.' , true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while confirming pickup.' , true);
+        });
+    }
+
+    function assignDriverToPurchase(driverId) {
+        if (!selectedPurchaseId) {
+            console.error("No purchase selected for driver assignment.");
+            return;
+        }
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        fetch(`/Admin/AssignDriver`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Request-Verification-Token': antiForgeryToken
+            },
+            body: JSON.stringify({ purchaseId: selectedPurchaseId, driverId: driverId })
+        })
+        .then(response => {
+            if (response.ok) {         
+                
+                showToast("Driver assigned successfully!");
+                closeModal('assignDriverModal');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+            } else {
+                showToast(`Failed to assign driver: ${errorMessage}` , true);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Modal functions
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function showToast(message, isError = false) {
+                const toast = document.getElementById("toast");
+                toast.textContent = message;
+                toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow ${
+                    isError ? "bg-red-600" : "bg-green-600"
+                } text-white`;
+                toast.classList.remove("hidden");
+
+                setTimeout(() => {
+                    toast.classList.add("hidden");
+                }, 3000);
+            }
+
+            function restoreButton() {
+                purchaseButtonText.textContent = "Confirm Purchase";
+                loadingSpinner.classList.add("hidden");
+                purchaseButton.disabled = false;
+            }
+        
+</script>
+
 <script>
     // Modal functions
     function openEditModal(purchaseId) {
@@ -303,4 +509,6 @@
     function closeModal(modalId) {
         document.getElementById(modalId).classList.add('hidden');
     }
+
+      
 </script>
