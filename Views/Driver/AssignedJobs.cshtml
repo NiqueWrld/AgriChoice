@@ -225,7 +225,7 @@
 
         function openGoogleMaps(address) {
             const encodedAddress = encodeURIComponent(address);
-            const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=My+Location&destination=${encodedAddress}&travelmode=driving`;
+            const mapsUrl = `https://www.google.com/maps/dir/${encodedAddress}&travelmode=driving`;
             window.open(mapsUrl, '_blank');
         }
 

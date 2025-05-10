@@ -74,7 +74,7 @@
                                 <!-- Address Line 1 -->
                                 <div class="col-span-full">
                                     <label for="addressLine1" class="block text-sm font-medium text-gray-700">Address Line 1</label>
-                                    <input type="text" id="addressLine1" name="addressLine1"
+                                    <input type="text" value="@ViewBag.Adress" id="addressLine1" name="addressLine1"
                                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-10"
                                            placeholder="Street address" required />
                                 </div>
@@ -282,6 +282,7 @@
     }
 </div>
 
+<div id="toast" class="hidden fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow" style="z-index: 99999;"></div>
 
 
 @section Scripts {
@@ -306,53 +307,58 @@
                 // Enable button once dropin is ready
                 purchaseButton.disabled = false;
 
-                        purchaseButton.addEventListener("click", function (e) {
-            purchaseButtonText.textContent = "Processing...";
-            loadingSpinner.classList.remove("hidden");
-            purchaseButton.disabled = true;
-
-            instance.requestPaymentMethod(async function (err, payload) {
-                if (err) {
-                    console.error(err);
-                    restoreButton();
-                    return;
-                }
-
-                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-                const data = {
-                    fullName: document.getElementById("fullName").value,
-                    addressLine1: document.getElementById("addressLine1").value,
-                    addressLine2: document.getElementById("addressLine2").value,
-                    city: document.getElementById("city").value,
-                    state: "",
-                    zipCode: document.getElementById("zipCode").value,
-                    phone: document.getElementById("phone").value,
-                    paymentMethodNonce: payload.nonce
-                };
-
-                const response = await fetch("/Customer/Checkout", {
-                        method: "POST",
-                        headers: {
-                            "RequestVerificationToken": token,
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(data),
-                    });
-
-                    const result = await response.json();
-
-                     if (result.success) {
-                        showToast(result.message);
-                        setTimeout(() => {
-                            window.location.href = "/Customer/MyOrders";
-                        }, 1000);
-                    } else {
-                        showToast(result.message, true);
-                         restoreButton();
+                purchaseButton.addEventListener("click", function (e) {
+                    e.preventDefault(); // Prevent form submission
+                    if (!validateCheckoutForm()) {
+                        return;
                     }
-            });
-        });
+
+                    purchaseButtonText.textContent = "Processing...";
+                    loadingSpinner.classList.remove("hidden");
+                    purchaseButton.disabled = true;
+
+                    instance.requestPaymentMethod(async function (err, payload) {
+                        if (err) {
+                            console.error(err);
+                            restoreButton();
+                            return;
+                        }
+
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                        const data = {
+                            fullName: document.getElementById("fullName").value,
+                            addressLine1: document.getElementById("addressLine1").value,
+                            addressLine2: document.getElementById("addressLine2").value,
+                            city: document.getElementById("city").value,
+                            state: document.getElementById("state").value,
+                            zipCode: document.getElementById("zipCode").value,
+                            phone: document.getElementById("phone").value,
+                            paymentMethodNonce: payload.nonce
+                        };
+
+                        const response = await fetch("/Customer/Checkout", {
+                            method: "POST",
+                            headers: {
+                                "RequestVerificationToken": token,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(data),
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            showToast(result.message);
+                            setTimeout(() => {
+                                window.location.href = "/Customer/MyOrders";
+                            }, 1000);
+                        } else {
+                            showToast(result.message, true);
+                            restoreButton();
+                        }
+                    });
+                });
             });
 
             // Remove item from cart
@@ -383,12 +389,47 @@
                 });
             });
 
+            function validateCheckoutForm() {
+                const fullName = document.getElementById("fullName").value.trim();
+                const addressLine1 = document.getElementById("addressLine1").value.trim();
+                const city = document.getElementById("city").value.trim();
+                const state = document.getElementById("state").value.trim();
+                const zipCode = document.getElementById("zipCode").value.trim();
+                const phone = document.getElementById("phone").value.trim();
+
+                if (!fullName) {
+                    showToast("Full name is required.", true);
+                    return false;
+                }
+                if (!addressLine1) {
+                    showToast("Address Line 1 is required.", true);
+                    return false;
+                }
+                if (!city) {
+                    showToast("City is required.", true);
+                    return false;
+                }
+                if (!state) {
+                    showToast("State/Province is required.", true);
+                    return false;
+                }
+                if (!zipCode || !/^\d{5}$/.test(zipCode)) {
+                    showToast("Valid ZIP/Postal code is required (5 digits).", true);
+                    return false;
+                }
+                if (!phone || !/^\d{10}$/.test(phone)) {
+                    showToast("Valid 10-digit phone number is required.", true);
+                    return false;
+                }
+
+                return true;
+            }
+
             function showToast(message, isError = false) {
                 const toast = document.getElementById("toast");
                 toast.textContent = message;
-                toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow ${
-                    isError ? "bg-red-600" : "bg-green-600"
-                } text-white`;
+                toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow ${isError ? "bg-red-600" : "bg-green-600"
+                    } text-white`;
                 toast.classList.remove("hidden");
 
                 setTimeout(() => {

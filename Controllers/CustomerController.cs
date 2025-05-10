@@ -7,18 +7,31 @@ using Microsoft.EntityFrameworkCore;
 using Azure.Core;
 using System.Security.Claims;
 using System;
+using Braintree;
+using AgriChoice.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AgriChoice.Controllers
 {
+    [Authorize(Roles = "Customer")]
     public class CustomerController : Controller
     {
         private readonly AgriChoiceContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private PaymentService _braintreeService;
 
-        public CustomerController(AgriChoiceContext context , UserManager<IdentityUser> userManager)
+        public CustomerController(AgriChoiceContext context , UserManager<IdentityUser> userManager , PaymentService braintreeService)
         {
             _context = context;
             _userManager = userManager;
+            _braintreeService = braintreeService;
+        }
+
+        public async Task<IActionResult> GetClientToken()
+        {
+            var gateway = _braintreeService.GetGateway();
+            var clientToken = await gateway.ClientToken.GenerateAsync();
+            return Json(new { clientToken });
         }
 
         // GET: Customer/BrowseCows
@@ -57,23 +70,55 @@ namespace AgriChoice.Controllers
 
         public IActionResult ViewOrderDetails(int id)
         {
-            if(id == null)
-            {
-                return NotFound();
-            }
-
             var currentUserName = User.Identity.Name;
 
             var order = _context.Purchases
-                .Include(o => o.PurchaseCows)
-                .ThenInclude(o => o.Cow)
-                .FirstOrDefault(o => o.User.UserName == currentUserName && o.PurchaseId == id);
-   
+               .Include(o => o.Delivery)
+               .Include(o => o.PurchaseCows)
+               .ThenInclude(o => o.Cow)
+               .FirstOrDefault(o => o.User.UserName == currentUserName && o.PurchaseId == id);
 
+            if (order == null)
+            {
+                return NotFound();
+            }
+   
             return View(order);
         }
 
-        
+        [HttpPost]
+        public async Task<IActionResult> SubmitReview(int purchaseId, string reviewContent)
+        {
+            if (string.IsNullOrWhiteSpace(reviewContent))
+            {
+                return BadRequest("Review content cannot be empty.");
+            }
+
+            var order = await _context.Purchases.FindAsync(purchaseId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            var currentUserId = _userManager.GetUserId(User);
+
+            var review = new Review
+            {
+                UserId = currentUserId,
+                Content = reviewContent,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync(); // Save to generate ReviewId
+
+            // Now associate review with the order
+            order.ReviewId = review.ReviewId;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("OrderDetails", new { id = purchaseId });
+        }
 
 
         public IActionResult Checkout()
@@ -84,6 +129,8 @@ namespace AgriChoice.Controllers
                     .Include(c => c.Items)
                     .ThenInclude(ci => ci.Cow)
                     .FirstOrDefault(c => c.UserId == currentUserId);
+
+            ViewBag.Adress = cart?.DeliveryAddress ?? "undefined";
 
             return View(cart);
         }
@@ -121,6 +168,8 @@ namespace AgriChoice.Controllers
                     };
 
                     _context.Carts.Add(cart);
+                     await _context.SaveChangesAsync();
+                    return Json(new { success = false, triggerModal = true, message = "Please provide a delivery address to create your cart." });
                 }
 
                 // Check if the item is already in the cart
@@ -147,7 +196,7 @@ namespace AgriChoice.Controllers
                 cart.Items.Add(cartItem);
 
                 cart.SubTotal = cart.Items.Sum(item => item.Cow.Price);
-                cart.ShippingCost = cart.Items.Count * 500;
+                cart.ShippingCost = await cart.CalculateShippingCostAsync();
                 cart.TotalCost = cart.SubTotal + cart.ShippingCost;
 
                 // Save changes to the database
@@ -160,9 +209,49 @@ namespace AgriChoice.Controllers
             return Json(new { success = true, message = "Cow added to cart successfully!" });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetDeliveryAddress(string deliveryAddress)
+        {
+            if (string.IsNullOrWhiteSpace(deliveryAddress))
+            {
+                return Json(new { success = false, message = "Delivery address cannot be empty." });
+            }
+
+            var currentUserId = _userManager.GetUserId(User);
+
+            // Find or create the user's cart
+            var cart = await _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.UserId == currentUserId);
+
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    UserId = currentUserId,
+                    DeliveryAddress = deliveryAddress,
+                    DateCreated = DateTime.UtcNow,
+                    Items = new List<CartItem>()
+                };
+
+                _context.Carts.Add(cart);
+            }
+            else
+            {
+                cart.DeliveryAddress = deliveryAddress;
+            }
+
+            // Save changes to the database
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Delivery address set successfully!" });
+        }
+
         public class RemoveCartItemRequest
         {
             public int Id { get; set; }
+            public string PaymentMethodNonce { get; set; }
         }
 
         [HttpPost]
@@ -191,6 +280,12 @@ namespace AgriChoice.Controllers
             }
 
             _context.CartItems.Remove(itemToRemove);
+            cart.Items.Remove(itemToRemove); // Also remove from in-memory collection
+
+            cart.SubTotal = cart.Items.Sum(item => item.Cow.Price);
+            cart.ShippingCost = cart.Items.Count * 500;
+            cart.TotalCost = cart.SubTotal + cart.ShippingCost;
+
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Cow removed from cart successfully." });
@@ -213,66 +308,111 @@ namespace AgriChoice.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            var cart = await _context.Carts
-                .Include(c => c.Items)
-                    .ThenInclude(ci => ci.Cow)
-                .FirstOrDefaultAsync(c => c.UserId == userId);
-
-            if (cart == null || cart.Items.Count == 0)
+            try
             {
-                return RedirectToAction("Cart");
-            }
-
-            Random random = new Random();
-
-            // Create delivery with no driver and scheduled for 3 days from now
-            var delivery = new Delivery
-            {
-                DriverId = null,
-                CurrentLocation = null, // or set an initial value if needed
-                ScheduledDate = DateTime.UtcNow.AddDays(3),
-                User = await _userManager.FindByIdAsync(userId),
-                PickedUp = false,
-                PickUpPin = random.Next(1000, 10000),
-                DropOffPin = random.Next(1000, 10000)
-            };
-
-            _context.Deliveries.Add(delivery);
-            await _context.SaveChangesAsync(); // Save to get the DeliveryId
-
-            var purchase = new Purchase
-            {
-                UserId = userId,
-                TotalPrice = cart.TotalCost,
-                PurchaseDate = DateTime.UtcNow,
-                PaymentStatus = Purchase.Paymentstatus.Completed,
-                DeliveryStatus = Purchase.Deliverystatus.Scheduled,
-                DeliveryAddress = request.AddressLine1,
-                DeliveryId = delivery.DeliveryId,
-                PurchaseCows = new List<PurchaseCow>()
-            };
-
-            foreach (var item in cart.Items)
-            {
-                item.Cow.IsAvailable = false;
-
-                var purchaseCow = new PurchaseCow
+                if (request == null || string.IsNullOrEmpty(request.PaymentMethodNonce))
                 {
-                    CowId = item.CowId,
-                    Purchase = purchase
+                    return BadRequest(new { success = false, error = "Invalid request: PaymentMethodNonce is required." });
+                }
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var cart = await _context.Carts
+                    .Include(c => c.Items)
+                        .ThenInclude(ci => ci.Cow)
+                    .FirstOrDefaultAsync(c => c.UserId == userId);
+
+                if (cart == null || cart.Items.Count == 0)
+                {
+                    return RedirectToAction("Cart");
+                }
+
+                Random random = new Random();
+
+                // Create delivery with no driver and scheduled for 3 days from now
+                var delivery = new Delivery
+                {
+                    DriverId = null,
+                    CurrentLocation = null, // or set an initial value if needed
+                    ScheduledDate = DateTime.UtcNow.AddDays(3),
+                    User = await _userManager.FindByIdAsync(userId),
+                    PickedUp = false,
+                    PickUpPin = random.Next(1000, 10000),
+                    DropOffPin = random.Next(1000, 10000)
                 };
 
-                purchase.PurchaseCows.Add(purchaseCow);
+                _context.Deliveries.Add(delivery);
+                await _context.SaveChangesAsync(); // Save to get the DeliveryId
+
+                var purchase = new Purchase
+                {
+                    UserId = userId,
+                    TotalPrice = cart.TotalCost,
+                    PurchaseDate = DateTime.UtcNow,
+                    PaymentStatus = Purchase.Paymentstatus.Completed,
+                    DeliveryStatus = Purchase.Deliverystatus.Scheduled,
+                    DeliveryAddress = request.AddressLine1,
+                    DeliveryId = delivery.DeliveryId,
+                    PurchaseCows = new List<PurchaseCow>()
+                };
+
+                foreach (var item in cart.Items)
+                {
+                    item.Cow.IsAvailable = false;
+
+                    var purchaseCow = new PurchaseCow
+                    {
+                        CowId = item.CowId,
+                        Purchase = purchase
+                    };
+
+                    purchase.PurchaseCows.Add(purchaseCow);
+                }
+
+                var gateway = _braintreeService.GetGateway();
+
+                var transactionRequest = new TransactionRequest
+                {
+                    Amount = purchase.TotalPrice, // Now using the calculated amount
+                    PaymentMethodNonce = request.PaymentMethodNonce,
+                    Options = new TransactionOptionsRequest { SubmitForSettlement = true }
+                };
+
+                var result = await gateway.Transaction.SaleAsync(transactionRequest);
+
+                if (result.IsSuccess())
+                {
+                    _context.Purchases.Add(purchase);
+                    _context.CartItems.RemoveRange(cart.Items);
+
+                    await _context.SaveChangesAsync();
+
+                    // Send email after successful checkout
+                    var emailSender = new EmailSender();
+                    var user = await _userManager.FindByIdAsync(userId);
+                    var email = user.Email;
+
+                    var emailSubject = "Order Confirmation";
+                    var emailBody = $"Dear {user.UserName},\n\nYour order has been successfully placed. " +
+                                    $"Your total is {cart.TotalCost:C}. Your delivery is scheduled for {delivery.ScheduledDate:dddd, MMMM dd, yyyy}.\n\nThank you for shopping with us!\n\nBest regards,\nAgriChoice Team";
+
+                    await emailSender.SendEmailAsync(
+                        to: email,
+                        subject: emailSubject,
+                        body: emailBody
+                    );
+
+                    return Json(new { success = true, message = "Your purchase was completed successfully!" });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = result.Message });
+                }
             }
-
-            _context.Purchases.Add(purchase);
-            _context.CartItems.RemoveRange(cart.Items);
-
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, message = "Your purchase was completed successfully!" });
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
 
 

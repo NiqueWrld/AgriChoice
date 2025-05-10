@@ -12,6 +12,9 @@ namespace AgriChoice.Models
         [Required]
         public string Name { get; set; }
 
+        [Required]
+        public string Gender { get; set; }
+
         public int Age { get; set; }
 
         public double Weight { get; set; } 

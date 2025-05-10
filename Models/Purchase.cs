@@ -51,6 +51,8 @@ namespace AgriChoice.Models
             Delivered
         }
 
+        public int? ReviewId { get; set; }
+
     }
 
     public class PurchaseCow

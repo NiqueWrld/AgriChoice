@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
+﻿
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AgriChoice</title>
-    @*<script src="https://cdn.tailwindcss.com"></script>*@
-    <script src="~/js/tailwind.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="flex flex-col min-h-screen">
@@ -173,9 +174,9 @@
                         </svg>
                         Secure Checkout
                     </a>
-                    <button id="continueShopping" class="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                    <a asp-controller="Customer" asp-action="BrowseCows" class="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 shadow-sm text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
                         Continue Shopping
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -191,6 +192,7 @@
             const cartButton = document.getElementById('cartButton');
             const cartSidebar = document.getElementById('cartSidebar');
             const cartOverlay = document.getElementById('cartOverlay');
+                const closeCart = document.getElementById('closeCart');
             const cartItemsContainer = document.getElementById('cartItemsContainer');
             const cartItemCount = document.getElementById('cartItemCount');
 
@@ -249,8 +251,26 @@
                                     <p class="text-sm text-gray-500">${item.cowBreed}</p>
                                     <p class="text-sm font-semibold text-indigo-600">${price}</p>
                                 </div>
-                                <button class="text-red-600 hover:text-red-800 text-sm font-medium" onclick="removeFromCart(${item.CartItemId})">Remove</button>
-                            </div>
+
+                                             @*
+                                                <button type="button"
+                                                        data-id="${item.CowId}"
+                                                        class="remove-from-cart-btn inline-flex items-center justify-center p-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd"
+                                                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1
+                                                                 0 000 2v10a2 2 0 002 2h8a2 2
+                                                                 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1
+                                                                 0 0011 2H9zM7 8a1 1 0 012
+                                                                 0v6a1 1 0 11-2
+                                                                 0V8zm5-1a1 1 0 00-1
+                                                                 1v6a1 1 0 102
+                                                                 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                                           *@
+                                                
+                                        </div>
                         </div>`;
                     cartItemsContainer.insertAdjacentHTML('beforeend', itemElement);
                 });
@@ -283,19 +303,12 @@
                             }
                         }
 
-            // Function to remove an item from the cart
-            async function removeFromCart(cartItemId) {
-                try {
-                    await fetch(`/Customer/RemoveFromCart/${cartItemId}`, { method: 'POST' });
-                    fetchCart(); // Refresh cart after removal
-                } catch (error) {
-                    console.error('Error removing item from cart:', error);
-                }
-            }
+           
 
             // Attach toggle function to cart button
             cartButton.addEventListener('click', toggleCartSidebar);
             cartOverlay.addEventListener('click', toggleCartSidebar);
+                closeCart.addEventListener('click', toggleCartSidebar);
 
             // Fetch cart on page load
             fetchCart();

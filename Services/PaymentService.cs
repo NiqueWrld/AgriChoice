@@ -17,6 +17,8 @@ namespace AgriChoice.Services
             };
         }
 
+        public IBraintreeGateway GetGateway() => _gateway;
+
         public async Task<string> CreateTransactionAsync(decimal amount, string paymentMethodNonce)
         {
             var request = new TransactionRequest

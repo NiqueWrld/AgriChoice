@@ -100,8 +100,9 @@ namespace AgriChoice.Data
                         Age = 4,
                         Weight = 600.5,
                         Price = 11800.00M,
+                        Gender = "Male",
                         Description = "High milk yield",
-                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/0/0c/Cow_female_black_white.jpg",
+                        ImageUrl = "https://cdn.britannica.com/11/136111-050-174C2796/Holstein-cow.jpg",
                         IsAvailable = true
                     },
                     new Cow
@@ -111,8 +112,9 @@ namespace AgriChoice.Data
                         Age = 3,
                         Weight = 550.0,
                         Price = 12150.00M,
+                        Gender = "Female",
                         Description = "Calm temperament",
-                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Jersey_cattle_calf_and_cow.jpg/1200px-Jersey_cattle_calf_and_cow.jpg",
+                        ImageUrl = "https://tse1.mm.bing.net/th/id/OIP.4plNfNTdMGql1R2JijVkaAHaE8?cb=iwc1&rs=1&pid=ImgDetMain",
                         IsAvailable = true
                     },
                     new Cow
@@ -122,8 +124,9 @@ namespace AgriChoice.Data
                         Age = 5,
                         Weight = 620.3,
                         Price = 11950.00M,
+                        Gender = "Male",
                         Description = "Good butterfat content",
-                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/f/fe/Guernsey_cow.jpg",
+                        ImageUrl = "https://tse1.mm.bing.net/th/id/OIP.83NsYycYaT_E14TFxuVjgQHaGC?cb=iwc1&rs=1&pid=ImgDetMain",
                         IsAvailable = true
                     },
                     new Cow
@@ -133,8 +136,9 @@ namespace AgriChoice.Data
                         Age = 2,
                         Weight = 500.2,
                         Price = 12200.00M,
+                        Gender = "Female",
                         Description = "Young and healthy",
-                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/8/87/Ayrshire_cow.jpg",
+                        ImageUrl = "https://th.bing.com/th/id/R.4f9405bf46d9476e1e743c319b6457f0?rik=8uXCXAkDm7iNxQ&pid=ImgRaw&r=0",
                         IsAvailable = true
                     },
                     new Cow
@@ -144,8 +148,9 @@ namespace AgriChoice.Data
                         Age = 6,
                         Weight = 700.1,
                         Price = 12050.00M,
+                        Gender = "Male",
                         Description = "Experienced milker",
-                        ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/7/7d/Brown_Swiss_cow.jpg",
+                        ImageUrl = "https://tse3.mm.bing.net/th/id/OIP.GxXf2EKvsKGCBEYiFqWQhAHaFA?cb=iwc1&rs=1&pid=ImgDetMain",
                         IsAvailable = true
                     }
                 );

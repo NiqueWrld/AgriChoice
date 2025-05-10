@@ -16,6 +16,7 @@ public class AgriChoiceContext : IdentityDbContext<IdentityUser>
     public DbSet<Purchase> Purchases { get; set; }
     public DbSet<PurchaseCow> PurchaseCow { get; set; }
     public DbSet<Cart> Carts { get; set; }
+    public DbSet<Review> Reviews { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<Delivery> Deliveries { get; set; }
@@ -23,8 +24,11 @@ public class AgriChoiceContext : IdentityDbContext<IdentityUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        // Customize the ASP.NET Identity model and override the defaults if needed.
-        // For example, you can rename the ASP.NET Identity table names and more.
-        // Add your customizations after calling base.OnModelCreating(builder);
+
+        builder.Entity<Review>()
+            .HasOne(r => r)
+    .WithMany(p => p.Reviews)
+    .HasForeignKey(r => r.PurchaseId)
+    .OnDelete(DeleteBehavior.Restrict);
     }
 }

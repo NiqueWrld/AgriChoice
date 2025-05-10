@@ -30,11 +30,11 @@ namespace AgriChoice.Controllers
             }
 
             var deliveries = await _context.Purchases
-    .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id  && p.DeliveryStatus != Purchase.Deliverystatus.Delivered)
-    .Include(p => p.Delivery)
-    .Include(p => p.PurchaseCows)
-    .ThenInclude(pc => pc.Cow)
-    .ToListAsync();
+                .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id && p.DeliveryStatus != Purchase.Deliverystatus.Delivered)
+                .Include(p => p.Delivery)
+                .Include(p => p.PurchaseCows)
+                .ThenInclude(pc => pc.Cow)
+                .ToListAsync();
 
             return View(deliveries);
         }
@@ -48,16 +48,14 @@ namespace AgriChoice.Controllers
             }
 
             var deliveries = await _context.Purchases
-    .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id && p.DeliveryStatus == Purchase.Deliverystatus.Delivered)
-    .Include(p => p.Delivery)
-    .Include(p => p.PurchaseCows)
-    .ThenInclude(pc => pc.Cow)
-    .ToListAsync();
+                .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id && p.DeliveryStatus == Purchase.Deliverystatus.Delivered)
+                .Include(p => p.Delivery)
+                .Include(p => p.PurchaseCows)
+                .ThenInclude(pc => pc.Cow)
+                .ToListAsync();
 
             return View(deliveries);
         }
-        
-
 
         public async Task<IActionResult> Wallet()
         {
@@ -80,9 +78,8 @@ namespace AgriChoice.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ValidatePin([FromBody] PinRequest request)
+        public async Task<IActionResult> ValidatePin([FromBody] PinRequest request)
         {
-
             var purchase = _context.Purchases
                 .Include(p => p.Delivery)
                 .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
@@ -97,11 +94,27 @@ namespace AgriChoice.Controllers
                 purchase.DeliveryStatus = Purchase.Deliverystatus.Delivered;
                 purchase.Delivery.DeliveryCompletedDate = DateTime.UtcNow;
                 _context.SaveChanges();
+
+                // Send email notification to the customer
+                var emailSender = new EmailSender();
+                var user = await _userManager.FindByIdAsync(purchase.UserId);
+                if (user != null)
+                {
+                    var email = user.Email; // Assuming the email is stored in the IdentityUser object
+                    var emailSubject = "Delivery Confirmation";
+                    var emailBody = $"Dear {user.UserName},\n\nYour order with ID {purchase.PurchaseId} has been successfully delivered. Thank you for choosing AgriChoice!\n\nBest regards,\nAgriChoice Team";
+
+                    await emailSender.SendEmailAsync(
+                        to: email,
+                        subject: emailSubject,
+                        body: emailBody
+                    );
+                }
+
                 return Json(new { success = true });
             }
 
             return Json(new { success = false });
         }
-
     }
 }

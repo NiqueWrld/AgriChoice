@@ -46,7 +46,6 @@ namespace AgriChoice.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult AddCow(Cow model, IFormFile ImageUrl)
         {
-
             // Handle image upload (optional)
             if (ImageUrl != null && ImageUrl.Length > 0)
             {
@@ -63,12 +62,11 @@ namespace AgriChoice.Controllers
 
             model.IsAvailable = true;
 
-            // Save the Cow to the database (pseudo-code)
+            // Save the Cow to the database
             _context.Cows.Add(model);
             _context.SaveChanges();
 
             return RedirectToAction("ManageCows");
-
         }
 
         // Edit a Cow (GET)
@@ -87,7 +85,6 @@ namespace AgriChoice.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult EditCow(Cow model, IFormFile ImageUrl)
         {
-
             var existingCow = _context.Cows.FirstOrDefault(c => c.CowId == model.CowId);
             if (existingCow == null)
             {
@@ -96,6 +93,7 @@ namespace AgriChoice.Controllers
 
             // Update fields
             existingCow.Name = model.Name;
+            existingCow.Gender = model.Gender;
             existingCow.Breed = model.Breed;
             existingCow.Age = model.Age;
             existingCow.Weight = model.Weight;
@@ -119,7 +117,6 @@ namespace AgriChoice.Controllers
 
             _context.SaveChanges();
             return RedirectToAction("ManageCows");
-
         }
 
         // Delete a Cow (POST)
@@ -169,7 +166,7 @@ namespace AgriChoice.Controllers
         }
 
         [HttpPost]
-        public ActionResult AssignDriver([FromBody] AssignDriverRequest request)
+        public async Task<ActionResult> AssignDriver([FromBody] AssignDriverRequest request)
         {
             if (request == null)
             {
@@ -185,29 +182,62 @@ namespace AgriChoice.Controllers
             purchase.Delivery.DriverId = request.DriverId;
             _context.SaveChanges();
 
+            // Send email notification to the customer
+            var emailSender = new EmailSender();
+            var user = await _context.Users.FindAsync(purchase.UserId);
+            if (user != null)
+            {
+                var email = user.Email; // Assuming the email is stored in the IdentityUser object
+                var emailSubject = "Driver Assigned to Your Order";
+                var emailBody = $"Dear {user.UserName},\n\nA driver has been assigned to deliver your order with ID {purchase.PurchaseId}. You will be notified upon further updates.\n\nBest regards,\nAgriChoice Team";
+
+                await emailSender.SendEmailAsync(
+                    to: email,
+                    subject: emailSubject,
+                    body: emailBody
+                );
+            }
+
             return Ok("Driver assigned successfully.");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ValidatePin([FromBody] PinRequest request)
+        public async Task<IActionResult> ValidatePin([FromBody] PinRequest request)
         {
-
             var purchase = _context.Purchases
                 .Include(p => p.Delivery)
                 .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
 
-            if(purchase == null)
+            if (purchase == null)
             {
                 return NotFound();
             }
 
-            if (request.Pin == purchase.Delivery.PickUpPin) 
+            if (request.Pin == purchase.Delivery.PickUpPin)
             {
                 purchase.DeliveryStatus = Purchase.Deliverystatus.InTransit;
                 purchase.Delivery.PickedUp = true;
                 purchase.Delivery.PickupDate = DateTime.UtcNow;
                 _context.SaveChanges();
+
+                // Send email notification to the customer
+                var emailSender = new EmailSender();
+                var user = await _context.Users.FindAsync(purchase.UserId);
+
+                if (user != null)
+                {
+                    var email = user.Email; // Assuming the email is stored in the IdentityUser object
+                    var emailSubject = "Order In Transit";
+                    var emailBody = $"Dear {user.UserName},\n\nYour order with ID {purchase.PurchaseId} is now in transit. Thank you for your patience.\n\nBest regards,\nAgriChoice Team";
+
+                    await emailSender.SendEmailAsync(
+                        to: email,
+                        subject: emailSubject,
+                        body: emailBody
+                    );
+                }
+
                 return Json(new { success = true });
             }
 
@@ -219,7 +249,6 @@ namespace AgriChoice.Controllers
             public int Pin { get; set; }
             public int PurchaseId { get; set; }
         }
-
 
         public IActionResult ViewCow(int id)
         {

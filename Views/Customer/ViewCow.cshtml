@@ -38,7 +38,7 @@
             <!-- Image Section -->
             <div class="md:w-1/2">
                 <div class="h-80 md:h-full w-full relative">
-                    <img src="@Model.ImageUrl" alt="@Model.Breed" class="absolute inset-0 w-full h-full object-cover" />
+                    <img src="@Model.ImageUrl" onclick="openImageModal('@Model.ImageUrl', '@(string.IsNullOrEmpty(Model.Name) ? Model.Breed : Model.Name)')" alt="@Model.Breed" class="absolute inset-0 w-full h-full object-fill" />
                     @if (!Model.IsAvailable)
                     {
                         <div class="absolute top-4 right-4">
@@ -69,6 +69,10 @@
                     <div class="flex items-center">
                         <span class="w-24 text-sm font-medium text-gray-500">Breed:</span>
                         <span class="text-gray-900 font-medium">@Model.Breed</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-24 text-sm font-medium text-gray-500">Gender:</span>
+                        <span class="text-gray-900 font-medium">@Model.Gender</span>
                     </div>
                     <div class="flex items-center">
                         <span class="w-24 text-sm font-medium text-gray-500">Age:</span>
@@ -126,8 +130,8 @@
                                     </svg>
                                     Add To Cart
                                 </button>
-                             </form>
-                            
+                            </form>
+
                         }
                         else
                         {
@@ -147,6 +151,41 @@
 </div>
 
 <div id="toast" class="hidden fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow"></div>
+
+<!-- Add location modal -->
+<div id="locationModal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div>
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2a10 10 0 0110 10c0 3.866-2.11 7.093-5.25 8.75L12 22l-4.75-1.25C4.11 19.093 2 15.866 2 12a10 10 0 0110-10z" />
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Provide Your Location</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">To proceed, please allow us to access your location or manually input your delivery address.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-6">
+                <button id="getLocationButton" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:text-sm">
+                    Use Current Location
+                </button>
+                <div class="mt-3 text-center">
+                    <span class="text-sm text-gray-500">or</span>
+                </div>
+                <input type="text" id="manualAddress" placeholder="Enter delivery address" class="mt-3 w-full px-3 py-2 border rounded-md text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                <button id="confirmAddressButton" class="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Confirm Address
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     document.getElementById("add-to-cart-form").addEventListener("submit", async function (e) {
@@ -168,6 +207,8 @@
         if (result.success) {
             showToast(result.message);
             document.getElementById('cartButton').click();
+        } else if (result.triggerModal) {
+            openLocationModal();
         } else {
             showToast(result.message, true);
         }
@@ -182,5 +223,59 @@
         setTimeout(() => {
             toast.classList.add("hidden");
         }, 3000);
+    }
+
+    function openLocationModal() {
+        const modal = document.getElementById("locationModal");
+        modal.classList.remove("hidden");
+    }
+
+    function closeLocationModal() {
+        const modal = document.getElementById("locationModal");
+        modal.classList.add("hidden");
+    }
+
+    document.getElementById("getLocationButton").addEventListener("click", function () {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const coords = `${position.coords.latitude}, ${position.coords.longitude}`;
+                closeLocationModal();
+                await submitLocation(coords);
+            }, (error) => {
+                alert("Unable to retrieve location. Please input your address manually.");
+            });
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    });
+
+    document.getElementById("confirmAddressButton").addEventListener("click", async function () {
+        const address = document.getElementById("manualAddress").value;
+        if (!address.trim()) {
+            alert("Please enter a valid address.");
+            return;
+        }
+        closeLocationModal();
+        await submitLocation(address);
+    });
+
+    async function submitLocation(location) {
+        const form = new FormData();
+        form.append("deliveryAddress", location);
+
+        const response = await fetch("/Customer/SetDeliveryAddress", {
+            method: "POST",
+            headers: {
+                "RequestVerificationToken": document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: form
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast("Delivery address set successfully!");
+        } else {
+            showToast("Failed to set delivery address.", true);
+        }
     }
 </script>
