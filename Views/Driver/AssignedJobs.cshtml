@@ -40,7 +40,7 @@
                  <!-- Maps & Directions -->
                         <div class="mt-6">
 
-                    @if (purchase.RefundRequest.Status.ToString() == "Approved")
+                    @if (purchase.RefundRequest != null  && purchase.RefundRequest.Status.ToString() == "Approved")
                     {
                     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md">
                        

@@ -249,8 +249,12 @@ namespace AgriChoice.Controllers
                               join userRole in _context.UserRoles on user.Id equals userRole.UserId
                               join role in _context.Roles on userRole.RoleId equals role.Id
                               where role.Name == "Driver" &&
-                                    !_context.Purchases.Any(purchase => purchase.Delivery.DriverId == user.Id && purchase.DeliveryStatus != Purchase.Deliverystatus.Delivered || purchase.RefundRequest.Status != RefundRequest.Refundstatus.Returned)
+                                    !_context.Purchases.Any(purchase =>
+                                        purchase.Delivery.DriverId == user.Id &&
+                                        (purchase.DeliveryStatus != Purchase.Deliverystatus.Delivered || purchase.RefundRequest.DriverId == user.Id &&
+                                         purchase.RefundRequest.Status != RefundRequest.Refundstatus.Returned))
                               select user;
+
 
             var freeDriversList = freeDrivers.ToList();
 
