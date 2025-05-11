@@ -97,6 +97,11 @@ namespace AgriChoice.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Required(ErrorMessage = "Please select a role.")]
+            [Display(Name = "Role")]
+            public string Role { get; set; }
+
         }
 
 
@@ -122,10 +127,9 @@ namespace AgriChoice.Areas.Identity.Pages.Account
                 {
                     _logger.LogInformation("User created a new account with password.");
 
-                    // 👇 Assign "Customer" role here
-                    if (!await _userManager.IsInRoleAsync(user, "Customer"))
+                    if (!await _userManager.IsInRoleAsync(user, Input.Role))
                     {
-                        await _userManager.AddToRoleAsync(user, "Customer");
+                        await _userManager.AddToRoleAsync(user, Input.Role);
                     }
 
                     var userId = await _userManager.GetUserIdAsync(user);

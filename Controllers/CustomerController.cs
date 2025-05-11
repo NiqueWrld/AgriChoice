@@ -10,6 +10,7 @@ using System;
 using Braintree;
 using AgriChoice.Services;
 using Microsoft.AspNetCore.Authorization;
+using static Org.BouncyCastle.Asn1.Cmp.Challenge;
 
 namespace AgriChoice.Controllers
 {
@@ -73,6 +74,8 @@ namespace AgriChoice.Controllers
             var currentUserName = User.Identity.Name;
 
             var order = _context.Purchases
+               .Include(o => o.RefundRequest)
+               .Include(o => o.Review)
                .Include(o => o.Delivery)
                .Include(o => o.PurchaseCows)
                .ThenInclude(o => o.Cow)
@@ -84,6 +87,59 @@ namespace AgriChoice.Controllers
             }
    
             return View(order);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RequestRefund(int id)
+        {
+            var purchase = await _context.Purchases.FindAsync(id);
+            if (purchase == null)
+            {
+                return NotFound();
+            }
+            return View(purchase); 
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RequestRefund(RefundRequest model, IFormFile uploadedFile)
+        {
+            var currentUserId = _userManager.GetUserId(User);
+
+            var order = await _context.Purchases
+                .FirstOrDefaultAsync(o => o.PurchaseId == model.PurchaseId);
+
+            if (order == null)
+            {
+                return NotFound("Order not found.");
+            }
+
+            if (uploadedFile != null && uploadedFile.Length > 0)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    uploadedFile.CopyTo(memoryStream);
+                    byte[] imageBytes = memoryStream.ToArray();
+                    string base64Image = Convert.ToBase64String(imageBytes);
+
+                    // Optionally prepend the data URI scheme if you need to render it directly in HTML
+                    model.UploadedFileUrl = $"data:{uploadedFile.ContentType};base64,{base64Image}";
+                }
+            }
+
+            Random random = new Random();
+            model.UserId = currentUserId;
+            model.RequestedAt = DateTime.UtcNow;
+            model.DropOffPin = random.Next(1000, 10000);
+            model.PickOffPin = random.Next(1000, 10000);
+            model.Status = RefundRequest.Refundstatus.Pending;
+
+            _context.RefundRequests.Add(model);
+            await _context.SaveChangesAsync();
+
+            order.RefundRequest = model;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("ViewOrderDetails", new { id = model.PurchaseId });
         }
 
         [HttpPost]
@@ -117,10 +173,8 @@ namespace AgriChoice.Controllers
             order.ReviewId = review.ReviewId;
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("OrderDetails", new { id = purchaseId });
+            return RedirectToAction("ViewOrderDetails", new { id = purchaseId });
         }
-
-
         public IActionResult Checkout()
         {
             var currentUserId = _userManager.GetUserId(User);
@@ -347,6 +401,7 @@ namespace AgriChoice.Controllers
                 var purchase = new Purchase
                 {
                     UserId = userId,
+                    ShippingCost = cart.ShippingCost,
                     TotalPrice = cart.TotalCost,
                     PurchaseDate = DateTime.UtcNow,
                     PaymentStatus = Purchase.Paymentstatus.Completed,
@@ -383,6 +438,9 @@ namespace AgriChoice.Controllers
                 if (result.IsSuccess())
                 {
                     _context.Purchases.Add(purchase);
+                    cart.TotalCost = 0;
+                    cart.SubTotal = 0;
+                    cart.ShippingCost = 0;
                     _context.CartItems.RemoveRange(cart.Items);
 
                     await _context.SaveChangesAsync();

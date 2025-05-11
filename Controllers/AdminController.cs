@@ -5,6 +5,8 @@ using AgriChoice.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
+using Braintree;
+using MailKit.Search;
 
 namespace AgriChoice.Controllers
 {
@@ -80,6 +82,103 @@ namespace AgriChoice.Controllers
             return View(cow); // Return the Edit Cow form with the cow's data
         }
 
+        public IActionResult ViewOrderDetails(int id)
+        {
+
+            var order = _context.Purchases
+               .Include(o => o.RefundRequest)
+               .Include(o => o.Review)
+               .Include(o => o.Delivery)
+               .Include(o => o.PurchaseCows)
+               .ThenInclude(o => o.Cow)
+               .FirstOrDefault(o => o.PurchaseId == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            return View(order);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveRefund(int id)
+        {
+            var purchase = await _context.Purchases
+                .Include(p => p.RefundRequest)
+                .Include(p => p.User) // Assuming there's a navigation property to IdentityUser
+                .FirstOrDefaultAsync(p => p.PurchaseId == id);
+
+            if (purchase == null || purchase.RefundRequest == null)
+            {
+                return NotFound();
+            }
+
+            purchase.RefundRequest.Status = RefundRequest.Refundstatus.Approved;
+            await _context.SaveChangesAsync();
+
+            var emailSender = new EmailSender();
+
+            var email = purchase.User?.Email;
+            var username = purchase.User?.UserName ?? "Customer";
+
+            var emailSubject = "Order In Transit";
+            var emailBody = $"Dear {username},\n\n" +
+                            $"Your order with ID {purchase.PurchaseId} is now in transit. " +
+                            $"Thank you for your patience.\n\nBest regards,\nAgriChoice Team";
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                await emailSender.SendEmailAsync(
+                    to: email,
+                    subject: emailSubject,
+                    body: emailBody
+                );
+            }
+
+            return RedirectToAction("ViewOrderDetails", new { id = purchase.PurchaseId });
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> RejectRefund(int id)
+        {
+            var purchase = await _context.Purchases
+                .Include(p => p.RefundRequest)
+                .Include(p => p.User)
+                .FirstOrDefaultAsync(p => p.PurchaseId == id);
+
+            if (purchase == null || purchase.RefundRequest == null)
+            {
+                return NotFound();
+            }
+
+            purchase.RefundRequest.Status = RefundRequest.Refundstatus.Rejected;
+            await _context.SaveChangesAsync();
+
+            var emailSender = new EmailSender();
+
+            var email = purchase.User?.Email;
+            var username = purchase.User?.UserName ?? "Customer";
+
+            var emailSubject = "Refund Request Rejected";
+            var emailBody = $"Dear {username},\n\n" +
+                            $"We regret to inform you that your refund request for order ID {purchase.PurchaseId} has been rejected. " +
+                            $"If you have any questions, please contact our support team.\n\nBest regards,\nAgriChoice Team";
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                await emailSender.SendEmailAsync(
+                    to: email,
+                    subject: emailSubject,
+                    body: emailBody
+                );
+            }
+
+            return RedirectToAction("ViewOrderDetails", new { id = purchase.PurchaseId });
+        }
+
+
         // Edit a Cow (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -138,6 +237,7 @@ namespace AgriChoice.Controllers
         {
             // Retrieve all purchases with related cow and user information
             var purchases = await _context.Purchases
+                 .Include(p => p.RefundRequest)
                 .Include(p => p.Delivery)
                 .Include(p => p.PurchaseCows)
                 .ThenInclude(p => p.Cow)
@@ -149,7 +249,7 @@ namespace AgriChoice.Controllers
                               join userRole in _context.UserRoles on user.Id equals userRole.UserId
                               join role in _context.Roles on userRole.RoleId equals role.Id
                               where role.Name == "Driver" &&
-                                    !_context.Purchases.Any(purchase => purchase.Delivery.DriverId == user.Id && purchase.DeliveryStatus != Purchase.Deliverystatus.Delivered)
+                                    !_context.Purchases.Any(purchase => purchase.Delivery.DriverId == user.Id && purchase.DeliveryStatus != Purchase.Deliverystatus.Delivered || purchase.RefundRequest.Status != RefundRequest.Refundstatus.Returned)
                               select user;
 
             var freeDriversList = freeDrivers.ToList();
@@ -173,21 +273,48 @@ namespace AgriChoice.Controllers
                 return BadRequest("Invalid data.");
             }
 
-            var purchase = _context.Purchases.Include(p => p.Delivery).FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
+            var purchase = _context.Purchases
+                .Include(p => p.Delivery)
+                .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
+
             if (purchase == null || purchase.Delivery == null)
             {
                 return NotFound("Purchase or delivery not found.");
             }
 
-            purchase.Delivery.DriverId = request.DriverId;
-            _context.SaveChanges();
-
-            // Send email notification to the customer
             var emailSender = new EmailSender();
             var user = await _context.Users.FindAsync(purchase.UserId);
+
+            if (purchase.Delivery.DriverId != null && purchase.DeliveryStatus.ToString() == "Delivered")
+            {
+                var requestRefund = _context.RefundRequests
+                    .FirstOrDefault(r => r.PurchaseId == purchase.PurchaseId);
+
+                requestRefund.DriverId = request.DriverId;
+                _context.SaveChanges();
+
+                if (user != null)
+                {
+                    var email = user.Email;
+                    var emailSubject = "Driver Assigned to Your Order";
+                    var emailBody = $"Dear {user.UserName},\n\nA driver has been assigned to deliver your order with ID {purchase.PurchaseId}. You will be notified upon further updates.\n\nBest regards,\nAgriChoice Team";
+
+                    await emailSender.SendEmailAsync(
+                        to: email,
+                        subject: emailSubject,
+                        body: emailBody
+                    );
+                }
+
+                return Ok("Driver assigned successfully.");
+            }
+
+            purchase.Delivery.DriverId = request.DriverId;
+            _context.SaveChanges();
+          
             if (user != null)
             {
-                var email = user.Email; // Assuming the email is stored in the IdentityUser object
+                var email = user.Email;
                 var emailSubject = "Driver Assigned to Your Order";
                 var emailBody = $"Dear {user.UserName},\n\nA driver has been assigned to deliver your order with ID {purchase.PurchaseId}. You will be notified upon further updates.\n\nBest regards,\nAgriChoice Team";
 
@@ -201,11 +328,13 @@ namespace AgriChoice.Controllers
             return Ok("Driver assigned successfully.");
         }
 
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ValidatePin([FromBody] PinRequest request)
         {
             var purchase = _context.Purchases
+                .Include(p => p.RefundRequest)
                 .Include(p => p.Delivery)
                 .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
 
@@ -237,6 +366,14 @@ namespace AgriChoice.Controllers
                         body: emailBody
                     );
                 }
+
+                return Json(new { success = true });
+            }
+
+            if (request.Pin == purchase.RefundRequest.DropOffPin)
+            {
+                purchase.RefundRequest.Status = RefundRequest.Refundstatus.Returned;
+                _context.SaveChanges();
 
                 return Json(new { success = true });
             }

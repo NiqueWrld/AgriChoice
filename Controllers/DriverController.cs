@@ -30,8 +30,10 @@ namespace AgriChoice.Controllers
             }
 
             var deliveries = await _context.Purchases
-                .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id && p.DeliveryStatus != Purchase.Deliverystatus.Delivered)
+                .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id && p.DeliveryStatus != Purchase.Deliverystatus.Delivered  || p.RefundRequest.DriverId == user.Id && p.RefundRequest.Status != RefundRequest.Refundstatus.Returned)
+                .Include(p => p.User)
                 .Include(p => p.Delivery)
+                .Include(p => p.RefundRequest)
                 .Include(p => p.PurchaseCows)
                 .ThenInclude(pc => pc.Cow)
                 .ToListAsync();
@@ -50,6 +52,7 @@ namespace AgriChoice.Controllers
             var deliveries = await _context.Purchases
                 .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id && p.DeliveryStatus == Purchase.Deliverystatus.Delivered)
                 .Include(p => p.Delivery)
+                .Include(p => p.RefundRequest)
                 .Include(p => p.PurchaseCows)
                 .ThenInclude(pc => pc.Cow)
                 .ToListAsync();
@@ -81,6 +84,7 @@ namespace AgriChoice.Controllers
         public async Task<IActionResult> ValidatePin([FromBody] PinRequest request)
         {
             var purchase = _context.Purchases
+                .Include(p => p.RefundRequest)
                 .Include(p => p.Delivery)
                 .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
 
@@ -89,32 +93,55 @@ namespace AgriChoice.Controllers
                 return NotFound();
             }
 
-            if (request.Pin == purchase.Delivery.DropOffPin)
+            var user = await _userManager.FindByIdAsync(purchase.UserId);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            var emailSender = new EmailSender();
+            var email = user.Email;
+
+            if (request.Pin == purchase.Delivery?.DropOffPin)
             {
                 purchase.DeliveryStatus = Purchase.Deliverystatus.Delivered;
                 purchase.Delivery.DeliveryCompletedDate = DateTime.UtcNow;
                 _context.SaveChanges();
 
-                // Send email notification to the customer
-                var emailSender = new EmailSender();
-                var user = await _userManager.FindByIdAsync(purchase.UserId);
-                if (user != null)
-                {
-                    var email = user.Email; // Assuming the email is stored in the IdentityUser object
-                    var emailSubject = "Delivery Confirmation";
-                    var emailBody = $"Dear {user.UserName},\n\nYour order with ID {purchase.PurchaseId} has been successfully delivered. Thank you for choosing AgriChoice!\n\nBest regards,\nAgriChoice Team";
+                var emailSubject = "Order Delivered Successfully";
+                var emailBody = $"Dear {user.UserName},\n\nYour order (ID: {purchase.PurchaseId}) has been delivered successfully.\nThank you for shopping with AgriChoice!\n\nBest regards,\nAgriChoice Team";
 
-                    await emailSender.SendEmailAsync(
-                        to: email,
-                        subject: emailSubject,
-                        body: emailBody
-                    );
-                }
+                await emailSender.SendEmailAsync(email, emailSubject, emailBody);
+                return Json(new { success = true });
+            }
 
+            if (request.Pin == purchase.RefundRequest?.PickOffPin)
+            {
+                purchase.RefundRequest.PickedUp = true;
+                purchase.RefundRequest.CollectionCompletedDate = DateTime.UtcNow;
+                _context.SaveChanges();
+
+                var emailSubject = "Refund Item Picked Up";
+                var emailBody = $"Dear {user.UserName},\n\nYour refund item for order ID {purchase.PurchaseId} has been picked up successfully. We will notify you once it's processed.\n\nBest regards,\nAgriChoice Team";
+
+                await emailSender.SendEmailAsync(email, emailSubject, emailBody);
+                return Json(new { success = true });
+            }
+
+            if (request.Pin == purchase.RefundRequest?.DropOffPin)
+            {
+                purchase.RefundRequest.CollectionCompletedDate = DateTime.UtcNow;
+                _context.SaveChanges();
+
+                var emailSubject = "Refund Item Delivered";
+                var emailBody = $"Dear {user.UserName},\n\nYour refund item for order ID {purchase.PurchaseId} has been successfully delivered to us. We will begin processing your refund shortly.\n\nBest regards,\nAgriChoice Team";
+
+                await emailSender.SendEmailAsync(email, emailSubject, emailBody);
                 return Json(new { success = true });
             }
 
             return Json(new { success = false });
         }
+
     }
 }

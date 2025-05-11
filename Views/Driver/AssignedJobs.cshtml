@@ -39,8 +39,54 @@
             {
                  <!-- Maps & Directions -->
                         <div class="mt-6">
-                            @if (purchase.Delivery?.PickedUp == true)
+
+                    @if (purchase.RefundRequest.Status.ToString() == "Approved")
+                    {
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md">
+                       
+
+                            @if (purchase.RefundRequest?.PickedUp == false)
                             {
+                                <div class="flex items-center">
+                                    <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p class="text-sm text-blue-700 font-medium">Cows picked up and en route to delivery location</p>
+                                </div>
+                                <button onclick="openGoogleMaps('@purchase.DeliveryAddress')" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    </svg>
+                                    Start Trip to Collection Location
+                                </button>
+
+                                <button onclick="openConfirmPickOffModal(@purchase.PurchaseId)" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    </svg>
+                                    Confirm Pick Off
+                                </button>
+                            }
+                            else
+                            {
+                                <div class="flex items-center">
+                                    <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p class="text-sm text-blue-700 font-medium">Your Dropoff Pin @purchase.RefundRequest.DropOffPin</p>
+                                </div>
+                                <button onclick="openGoogleMaps('@farmAddress')" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    </svg>
+                                    Start Trip to Farm Location
+                                </button>
+                            }
+
+                    </div>
+                    }
+                    else if (purchase.Delivery?.PickedUp == true)
+            {
                                 <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md">
                                     <div class="flex items-center">
                                         <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,8 +110,7 @@
 
 
                             }
-                            else
-                            {
+                            else{
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
                             <div class="flex items-center">
                                 <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,9 +136,10 @@
                                         </svg>
                                         Get Directions to Farm
                                     </button>
-                                </div>
-                            }
-                            
+                        </div>
+                    }
+                    
+
                         </div>
 
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -125,7 +171,18 @@
                             <div>
                                 <h5 class="text-md font-semibold text-gray-700 mb-3">Customer Details</h5>
                                 <div class="space-y-2">
-                                   
+                                    <p>
+                                        <span class="font-medium text-gray-600">Name:</span>
+                                        @purchase.User?.UserName
+                                    </p>
+                                    <p>
+                                        <span class="font-medium text-gray-600">Email:</span>
+                                        @purchase.User?.Email
+                                    </p>
+                                    <p>
+                                        <span class="font-medium text-gray-600">Phone Number:</span>
+                                        @purchase.User?.PhoneNumber
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -213,6 +270,36 @@
     </div>
 </div>
 
+<div id="confirmPickOffModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal('confirmPickOffModal')"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="bg-indigo-600 px-4 py-3">
+                <h3 class="text-lg font-medium text-white" id="modal-title">Confirm Pick Off</h3>
+            </div>
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <p class="text-sm text-gray-700 mb-4">Enter 4-digit PIN to confirm pickoff:</p>
+                <input type="text" id="pickOffPinInput" maxlength="4" pattern="\d{4}" inputmode="numeric"
+                       class="w-full border border-gray-300 rounded-md px-4 py-2 text-center text-lg tracking-widest"
+                       placeholder="••••" />
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:justify-end">
+                <button type="button"
+                        onclick="confirmPickOffWithPin()"
+                        class="mr-2 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Confirm
+                </button>
+                <button type="button"
+                        onclick="closeModal('confirmPickOffModal')"
+                        class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <form method="post">
     @Html.AntiForgeryToken()
 </form>
@@ -225,7 +312,7 @@
 
         function openGoogleMaps(address) {
             const encodedAddress = encodeURIComponent(address);
-            const mapsUrl = `https://www.google.com/maps/dir/${encodedAddress}&travelmode=driving`;
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
             window.open(mapsUrl, '_blank');
         }
 
@@ -234,8 +321,50 @@
             document.getElementById('confirmDropOffModal').classList.remove('hidden');
         }
 
+        function openConfirmPickOffModal(purchaseId) {
+            selectedPurchaseId = purchaseId;
+            document.getElementById('confirmPickOffModal').classList.remove('hidden');
+        }
+
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function confirmPickOffWithPin() {
+            const pin = document.getElementById('pickOffPinInput').value.trim();
+
+            if (!/^\d{4}$/.test(pin)) {
+                alert('Please enter a valid 4-digit PIN.');
+                return;
+            }
+
+            fetch('/Driver/ValidatePin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify({ pin: pin, purchaseId: selectedPurchaseId })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        closeModal('confirmPickOffModal');
+                        showToast("Pickoff confirmed!");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showToast('Invalid PIN. Please try again.', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred while confirming pickup.', true);
+                });
         }
 
         function confirmDropOffWithPin() {
@@ -254,25 +383,25 @@
                 },
                 body: JSON.stringify({ pin: pin, purchaseId: selectedPurchaseId })
             })
-            .then(response => {
-                if (!response.ok) throw new Error('Network error');
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    closeModal('confirmPickUpModal');
-                    showToast("Pickup confirmed!");
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    showToast('Invalid PIN. Please try again.', true);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while confirming pickup.', true);
-            });
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        closeModal('confirmDropOffModal'); // Correct modal ID
+                        showToast("Dropoff confirmed!");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showToast('Invalid PIN. Please try again.', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred while confirming dropoff.', true);
+                });
         }
 
         function showToast(message, isError = false) {

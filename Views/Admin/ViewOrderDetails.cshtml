@@ -10,16 +10,17 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Order Details
+            Order Details (Admin)
         </h1>
-        <a asp-action="OrderHistory" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+        <a asp-action="Purchases" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
-            Back to Orders
+            Back to Purchases
         </a>
     </div>
 
+ 
     @if (Model.RefundRequest != null)
     {
         <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6">
@@ -29,28 +30,77 @@
                 </svg>
                 <div>
                     <p class="text-sm font-medium text-yellow-700">Return/Refund Requested</p>
-                    <p class="text-sm text-yellow-600">Your return request for this order is currently <strong>@Model.RefundRequest.Status</strong>.</p>
-                    <p class="text-sm text-yellow-600">Your Pickoff Pin is <strong>@Model.RefundRequest.PickOffPin</strong>.</p>
+                    <p class="text-sm text-yellow-600">The return request for this order is currently <strong>@Model.RefundRequest.Status</strong>.</p>
+                </div>
+            </div>
+
+            <!-- Refund Request Details -->
+            <div class="mt-4 bg-white border border-gray-200 rounded-md p-4">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Refund/Return Request Details</h3>
+                <dl class="grid grid-cols-1 gap-y-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Reason</dt>
+                        <dd class="mt-1 text-sm text-gray-900">@Model.RefundRequest.Reason</dd>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.RefundRequest.AdditionalComments))
+                    {
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Additional Comments</dt>
+                            <dd class="mt-1 text-sm text-gray-900">@Model.RefundRequest.AdditionalComments</dd>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.RefundRequest.UploadedFileUrl))
+                    {
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Uploaded Proof</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <img src="@Model.RefundRequest.UploadedFileUrl" alt="Uploaded Proof" class="max-w-full h-auto rounded shadow" />
+                            </dd>
+                        </div>
+
+                    }
+                </dl>
+
+                <!-- Admin Action Buttons -->
+                <div class="mt-6 flex gap-3">
+                    @if (Model.RefundRequest.Status.ToString() == "Pending")
+                    {
+                        <form asp-action="ApproveRefund" asp-route-id="@Model.RefundRequest.PurchaseId" method="post">
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md">Approve Request</button>
+                        </form>
+                        <form asp-action="RejectRefund" asp-route-id="@Model.RefundRequest.PurchaseId" method="post">
+                            <button type="submit" class="px-4 py-2  bg-red-600 text-white rounded-md"> Reject Request</button>
+                        </form>
+                    }
+                    else
+                    {  
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">This request has already been <strong>@Model.RefundRequest.Status</strong>.</p>
+                            <button class="bg-indigo-600 text-white px-4 py-2 mt-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    onclick="openConfirmDropOffModal(@Model.PurchaseId)">
+                                Confirm DropOff
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mt-6 bg-gray-50 border-l-4 border-gray-200 p-4 rounded-md mb-6">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M2 12h2m16 0h2m-6-6h6m-6 12h6M2 6h6m-6 12h6" />
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-gray-700">No Return/Refund Requested</p>
+                    <p class="text-sm text-gray-600">There is no return or refund request for this order.</p>
                 </div>
             </div>
         </div>
     }
 
-    @if (Model.DeliveryStatus.ToString() != "Delivered")
-    {
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
-            <div class="flex items-center">
-            <svg class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <div>
-                <p class="text-sm text-blue-700 font-medium">Your Pickup Pin</p>
-                <p class="text-sm text-blue-600">@Model.Delivery.DropOffPin</p>
-            </div>
-        </div>
-    </div>
-    }
 
     <!-- Order Summary Card -->
     <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
@@ -326,7 +376,6 @@
                     string status = Model.DeliveryStatus.ToString();
                     string deliveryDate = Model.Delivery?.DeliveryCompletedDate.ToString("MMMM dd, yyyy - h:mm tt") ?? "";
                     string estimatedDate = Model.Delivery?.ScheduledDate.ToString("MMMM dd, yyyy") ?? "";
-                    string estimatedDate2 = Model.RefundRequest?.ScheduledDate.ToString("MMMM dd, yyyy") ?? "";
                 }
 
                 @if (status == "Delivered")
@@ -383,27 +432,6 @@
                         </div>
                     </li>
                 }
-                 @if (Model.RefundRequest != null)
-                {
-                    @if (Model.RefundRequest.Status.ToString() == "Approved")
-                    {
-                        <li class="relative">
-                            <div class="flex items-start space-x-4">
-                                <div>
-                                    <span class="h-10 w-10 rounded-full bg-gray-400 flex items-center justify-center text-white">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-800">Order Refund Requested</p>
-                                    <p class="text-sm text-gray-600">Estimated delivery on @estimatedDate</p>
-                                </div>
-                            </div>
-                        </li>
-                    }
-                                        }
             </ul>
         </div>
     </div>
@@ -411,70 +439,128 @@
 
     @if (Model.DeliveryStatus.ToString() == "Delivered")
     {
-        <!-- Review & Refund/Return Section -->
-        <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:px-6 bg-gray-50">
-                <h2 class="text-lg leading-6 font-medium text-gray-900">Review & Refund/Return</h2>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Leave a review about your order or request a refund/return if needed.</p>
+        @if (!string.IsNullOrWhiteSpace(Model.Review?.Content))
+        {
+            <!-- Review & Refund/Return Section -->
+            <div class="mt-6 bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6 bg-gray-50">
+                <h2 class="text-lg leading-6 font-medium text-gray-900">Review</h2>
             </div>
             <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
                 <!-- Review Section -->
-                <div>
-                    <form asp-action="SubmitReview" method="post">
-                        <input type="hidden" name="purchaseId" value="@Model.PurchaseId" />
-                        <textarea name="reviewContent" class="w-full border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                                  rows="4"
-                                  placeholder="Write your review here...">@Model.Review?.Content</textarea>
-                        @if (Model.ReviewId == null)
-                        {
-                            <button type="submit" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-
-                                Submit Review
-
-                            </button>
-                        }
-                        else
-                        {
-                            <button type="submit" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Update Review
-                            </button>
-                        }
-                    </form>
-                </div>
-
-                @if (Model.RefundRequest == null)
-                { 
-                <!-- Refund/Return Section   -->
-                <div class="mt-6">
-                    <h3 class="text-md font-medium text-gray-900 mb-2">Request Refund/Return</h3>
-                    <p class="text-sm text-gray-500">If you're unsatisfied with your order, you can request a refund or return.</p>
-                    <a asp-action="RequestRefund" asp-route-id="@Model.PurchaseId" class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                        Request Refund/Return
-                    </a>
-                </div>
-                }
+                    <p class="text-sm text-gray-900 whitespace-pre-line">@Model.Review.Content</p>
             </div>
         </div>
+        }
     }
     
     <!-- Action Buttons -->
     <div class="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3">
-        @if (Model.DeliveryStatus.ToString() != "Completed")
-        {
-            <a asp-action="ContactSupport" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
-                Contact Support
-            </a>
-        }
-        <a asp-action="OrderHistory" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <a asp-action="Purchases" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
-            Back to All Orders
+            Back to Purchases
         </a>
     </div>
 </div>
 
- 
+<div id="confirmDropOffModal" class="fixed inset-0 z-10 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal('confirmPickUpModal')"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+            <div class="bg-indigo-600 px-4 py-3">
+                <h3 class="text-lg font-medium text-white" id="modal-title">Confirm Drop Off</h3>
+            </div>
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6">
+                <p class="text-sm text-gray-700 mb-4">Enter 4-digit PIN to confirm dropoff:</p>
+                <input type="text" id="dropOffPinInput" maxlength="4" pattern="\d{4}" inputmode="numeric"
+                       class="w-full border border-gray-300 rounded-md px-4 py-2 text-center text-lg tracking-widest"
+                       placeholder="••••" />
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:justify-end">
+                <button type="button"
+                        onclick="confirmDropOffWithPin()"
+                        class="mr-2 inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Confirm
+                </button>
+                <button type="button"
+                        onclick="closeModal('confirmDropOffModal')"
+                        class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="hidden fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow"></div>
+
+@section Scripts {
+    <script>
+        let selectedPurchaseId = null;
+
+        function openConfirmDropOffModal(purchaseId) {
+            selectedPurchaseId = purchaseId;
+            document.getElementById('confirmDropOffModal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow ${isError ? "bg-red-600" : "bg-green-600"} text-white`;
+            toast.classList.remove("hidden");
+
+            setTimeout(() => {
+                toast.classList.add("hidden");
+            }, 3000);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+
+        function confirmDropOffWithPin() {
+            const pin = document.getElementById('dropOffPinInput').value.trim();
+
+            if (!/^\d{4}$/.test(pin)) {
+                alert('Please enter a valid 4-digit PIN.');
+                return;
+            }
+
+            fetch('/Admin/ValidatePin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify({ pin: pin, purchaseId: selectedPurchaseId })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        closeModal('confirmDropOffModal'); // Correct modal ID
+                        showToast("Dropoff confirmed!");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showToast('Invalid PIN. Please try again.', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An error occurred while confirming dropoff.', true);
+                });
+        }
+
+    </script>
+}

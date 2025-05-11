@@ -28,7 +28,6 @@ namespace AgriChoice.Models
 
         [Required]
         public bool IsAvailable { get; set; } 
-
     }
 
 }

@@ -52,7 +52,11 @@ namespace AgriChoice.Models
         }
 
         public int? ReviewId { get; set; }
+        public Review? Review { get; set; }
 
+        public int? RefundRequestId { get; set; }
+
+        public RefundRequest? RefundRequest { get; set; }
     }
 
     public class PurchaseCow

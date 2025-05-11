@@ -27,8 +27,5 @@ namespace AgriChoice.Models
 
         public DateTime PickupDate { get; set; }
 
-
-        
-
     }
 }

@@ -17,6 +17,7 @@ public class AgriChoiceContext : IdentityDbContext<IdentityUser>
     public DbSet<PurchaseCow> PurchaseCow { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<RefundRequest> RefundRequests { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<Delivery> Deliveries { get; set; }
@@ -25,10 +26,5 @@ public class AgriChoiceContext : IdentityDbContext<IdentityUser>
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<Review>()
-            .HasOne(r => r)
-    .WithMany(p => p.Reviews)
-    .HasForeignKey(r => r.PurchaseId)
-    .OnDelete(DeleteBehavior.Restrict);
     }
 }
