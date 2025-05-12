@@ -413,10 +413,12 @@
                     showToast("State/Province is required.", true);
                     return false;
                 }
-                if (!zipCode || !/^\d{5}$/.test(zipCode)) {
-                    showToast("Valid ZIP/Postal code is required (5 digits).", true);
+
+                if (!zipCode || !/^\d{4}$/.test(zipCode)) {
+                    showToast("Valid ZIP/Postal code is required (4 digits).", true);
                     return false;
                 }
+
                 if (!phone || !/^\d{10}$/.test(phone)) {
                     showToast("Valid 10-digit phone number is required.", true);
                     return false;

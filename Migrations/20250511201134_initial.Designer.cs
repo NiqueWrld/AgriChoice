@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AgriChoice.Migrations
 {
     [DbContext(typeof(AgriChoiceContext))]
-    [Migration("20250511062848_initial")]
+    [Migration("20250511201134_initial")]
     partial class initial
     {
         /// <inheritdoc />

@@ -155,32 +155,35 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div class="flex space-x-2">
+                                    <div class="flex flex-col space-y-2">
+                                        <!-- Changed from flex-row to flex-col -->
+                                        @if (purchase.Delivery.PickedUp == false && purchase.Delivery?.DriverId != null)
+                                        {
+                                            <div>
+                                                <button class="w-40 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        onclick="openConfirmPickUpModal(@purchase.PurchaseId)">
+                                                    Confirm Pick Up
+                                                </button>
+                                            </div>
+                                        }
+
+
                                         @if (purchase.DeliveryStatus.ToString() == "Scheduled")
                                         {
                                             if (purchase.Delivery?.DriverId == null)
                                             {
-                                                <div class="mt-2">
-                                                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                    onclick="openAssignDriverModal(@purchase.PurchaseId)">
+                                                <div>
+                                                    <button class="w-40 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            onclick="openAssignDriverModal(@purchase.PurchaseId)">
                                                         Assign Driver
-                                                    </button>
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <div class="mt-2">
-                                                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                    onclick="openConfirmPickUpModal(@purchase.PurchaseId)">
-                                                        Confirm Pick Up
                                                     </button>
                                                 </div>
                                             }
                                         }
                                         else if (purchase.RefundRequest != null && purchase.RefundRequest.Status.ToString() == "Approved" && purchase.RefundRequest.DriverId == null)
                                         {
-                                            <div class="mt-2">
-                                                <button class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            <div>
+                                                <button class="w-40 bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                                         onclick="openAssignDriverModal(@purchase.PurchaseId)">
                                                     Assign Driver
                                                 </button>
@@ -188,18 +191,19 @@
                                         }
                                         else
                                         {
-                                
-                                        <a asp-action="ViewOrderDetails" asp-route-id="@purchase.PurchaseId" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
-                                            View Details
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="ml-1 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                            </svg>
-                                        </a>
-                                
-                                        } 
+                                            <div>
+                                                <a asp-action="ViewOrderDetails" asp-route-id="@purchase.PurchaseId" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+                                                    View Details
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-1 h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        }
 
                                     </div>
                                 </td>
+
                             </tr>
                         }
 

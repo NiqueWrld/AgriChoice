@@ -28,6 +28,20 @@ namespace AgriChoice.Controllers
             _braintreeService = braintreeService;
         }
 
+        public async Task<IActionResult> Wallet()
+        {
+            var userId = _userManager.GetUserId(User);
+
+            var transactions = await _context.Transactions
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.Date)
+                .ToListAsync();
+
+            ViewBag.Balance = transactions.Sum(t => t.Amount);
+
+            return View(transactions);
+        }
+
         public async Task<IActionResult> GetClientToken()
         {
             var gateway = _braintreeService.GetGateway();
@@ -378,21 +392,38 @@ namespace AgriChoice.Controllers
 
                 if (cart == null || cart.Items.Count == 0)
                 {
-                    return RedirectToAction("Cart");
+                    return Json(new { success = false, message = "Your cart is empty. Please add items to your cart before checking out." });
                 }
 
                 Random random = new Random();
 
-                // Create delivery with no driver and scheduled for 3 days from now
+                // Find an available driver
+                var availableDriver = (from user in _context.Users
+                                       join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                                       join role in _context.Roles on userRole.RoleId equals role.Id
+                                       where role.Name == "Driver" &&
+                                             !_context.Purchases.Any(purchase =>
+                                                 purchase.Delivery.DriverId == user.Id &&
+                                                 (purchase.DeliveryStatus != Purchase.Deliverystatus.Delivered ||
+                                                  (purchase.RefundRequest != null &&
+                                                   purchase.RefundRequest.DriverId == user.Id &&
+                                                   purchase.RefundRequest.Status != RefundRequest.Refundstatus.Returned)))
+                                       select user).FirstOrDefault();
+
+                if (availableDriver == null)
+                {
+                    return Json(new { success = false, message = "No available drivers at the moment. Please try again later." });
+                }
+
+                // Create delivery with the assigned driver
                 var delivery = new Delivery
                 {
-                    DriverId = null,
-                    CurrentLocation = null, // or set an initial value if needed
+                    DriverId = availableDriver.Id,
                     ScheduledDate = DateTime.UtcNow.AddDays(3),
-                    User = await _userManager.FindByIdAsync(userId),
-                    PickedUp = false,
                     PickUpPin = random.Next(1000, 10000),
-                    DropOffPin = random.Next(1000, 10000)
+                    DropOffPin = random.Next(1000, 10000),
+                    User = await _userManager.FindByIdAsync(userId),
+                    PickedUp = false
                 };
 
                 _context.Deliveries.Add(delivery);
@@ -438,10 +469,33 @@ namespace AgriChoice.Controllers
                 if (result.IsSuccess())
                 {
                     _context.Purchases.Add(purchase);
+                    await _context.SaveChangesAsync(); // Ensure PurchaseId is generated here
+
                     cart.TotalCost = 0;
                     cart.SubTotal = 0;
                     cart.ShippingCost = 0;
                     _context.CartItems.RemoveRange(cart.Items);
+
+                    var transaction1 = new Models.Transaction
+                    {
+                        UserId = userId,
+                        Amount = purchase.TotalPrice,
+                        Type = Models.TransactionType.Credit,
+                        Date = DateTime.UtcNow,
+                        Description = "Received Amount"
+                    };
+
+                    var transaction2 = new Models.Transaction
+                    {
+                        UserId = userId,
+                        Amount = -purchase.TotalPrice,
+                        Type = Models.TransactionType.Debit,
+                        Date = DateTime.UtcNow,
+                        Description = $"Purchase ID: {purchase.PurchaseId}"
+                    };
+
+                    _context.Transactions.Add(transaction1);
+                    _context.Transactions.Add(transaction2);
 
                     await _context.SaveChangesAsync();
 
@@ -452,7 +506,8 @@ namespace AgriChoice.Controllers
 
                     var emailSubject = "Order Confirmation";
                     var emailBody = $"Dear {user.UserName},\n\nYour order has been successfully placed. " +
-                                    $"Your total is {cart.TotalCost:C}. Your delivery is scheduled for {delivery.ScheduledDate:dddd, MMMM dd, yyyy}.\n\nThank you for shopping with us!\n\nBest regards,\nAgriChoice Team";
+                                    $"Your total is {purchase.TotalPrice:C}. Your delivery is scheduled for {delivery.ScheduledDate:dddd, MMMM dd, yyyy}.\n\n" +
+                                    $"Driver {availableDriver.UserName} has been assigned to your delivery.\n\nThank you for shopping with us!\n\nBest regards,\nAgriChoice Team";
 
                     await emailSender.SendEmailAsync(
                         to: email,
@@ -472,6 +527,7 @@ namespace AgriChoice.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
 
 
         // GET: Customer/ViewCow/{id}

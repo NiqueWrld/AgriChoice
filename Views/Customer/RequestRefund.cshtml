@@ -4,38 +4,43 @@
     ViewData["Title"] = "Request Refund/Return";
 }
 
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Request Refund/Return for @Model.PurchaseId</h1>
+<div class="max-w-2xl mx-auto px-6 py-10 bg-white shadow-md rounded-lg">
+    <h1 class="text-3xl font-semibold text-gray-800 mb-8 border-b pb-4">Request Refund/Return for Purchase #@Model.PurchaseId</h1>
 
-    <form asp-action="RequestRefund" method="post" enctype="multipart/form-data">
+    <form asp-action="RequestRefund" method="post" enctype="multipart/form-data" class="space-y-6">
         <input type="hidden" name="PurchaseId" value="@Model.PurchaseId" />
 
-        <div class="mb-4">
-            <label for="reason" class="block text-sm font-medium text-gray-700">Reason for Refund/Return</label>
-            <select id="reason" name="Reason" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="Defective Product">Defective Product</option>
-                <option value="Wrong Item Delivered">Wrong Item Delivered</option>
-                <option value="Item Not as Described">Item Not as Described</option>
+        <div>
+            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Return/Replacement <span class="text-red-600">*</span></label>
+            <select id="reason" name="Reason" required
+                    class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">-- Select a reason --</option>
+                <option value="Animal is Sick or Injured">Animal is Sick or Injured</option>
+                <option value="Wrong Breed Delivered">Wrong Breed Delivered</option>
+                <option value="Animal Does Not Meet Agreed Specifications">Animal Does Not Meet Agreed Specifications</option>
+                <option value="Pregnancy Status Not as Claimed">Pregnancy Status Not as Claimed</option>
+                <option value="Aggressive or Unmanageable Behavior">Aggressive or Unmanageable Behavior</option>
+                <option value="Animal Was Not Delivered">Animal Was Not Delivered</option>
                 <option value="Other">Other</option>
             </select>
-        </div>
-
-        <div class="mb-4">
-            <label for="additionalComments" class="block text-sm font-medium text-gray-700">Additional Comments (Optional)</label>
-            <textarea id="additionalComments" name="AdditionalComments" rows="4"
-                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-        </div>
-
-        <div class="mb-4">
-            <label for="uploadedFile" class="block text-sm font-medium text-gray-700">Upload Proof (Optional)</label>
-            <input type="file" id="uploadedFile" name="uploadedFile"
-                   accept="image/*"
-                   class="mt-1 block w-full text-sm text-gray-500">
 
         </div>
 
-        <div class="flex justify-end">
-            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <div>
+            <label for="additionalComments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments <span class="text-red-600">*</span></label>
+            <textarea id="additionalComments" name="AdditionalComments" rows="4" required
+                      class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+        </div>
+
+        <div>
+            <label for="uploadedFile" class="block text-sm font-medium text-gray-700 mb-1">Upload Proof <span class="text-red-600">*</span></label>
+            <input type="file" id="uploadedFile" name="uploadedFile" required accept="image/*"
+                   class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+        </div>
+
+        <div class="flex justify-end pt-4">
+            <button type="submit"
+                    class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md shadow">
                 Submit Request
             </button>
         </div>

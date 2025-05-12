@@ -30,7 +30,11 @@
                 <div>
                     <p class="text-sm font-medium text-yellow-700">Return/Refund Requested</p>
                     <p class="text-sm text-yellow-600">Your return request for this order is currently <strong>@Model.RefundRequest.Status</strong>.</p>
+                   @if (Model.RefundRequest.Status.ToString() == "Approved")
+                    {
                     <p class="text-sm text-yellow-600">Your Pickoff Pin is <strong>@Model.RefundRequest.PickOffPin</strong>.</p>
+                    }
+                   
                 </div>
             </div>
         </div>

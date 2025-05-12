@@ -115,6 +115,8 @@ namespace AgriChoice.Controllers
             }
 
             purchase.RefundRequest.Status = RefundRequest.Refundstatus.Approved;
+            purchase.RefundRequest.PickedUp = false;
+
             await _context.SaveChangesAsync();
 
             var emailSender = new EmailSender();
@@ -122,10 +124,11 @@ namespace AgriChoice.Controllers
             var email = purchase.User?.Email;
             var username = purchase.User?.UserName ?? "Customer";
 
-            var emailSubject = "Order In Transit";
+            var emailSubject = "Refund Approved";
             var emailBody = $"Dear {username},\n\n" +
-                            $"Your order with ID {purchase.PurchaseId} is now in transit. " +
-                            $"Thank you for your patience.\n\nBest regards,\nAgriChoice Team";
+                            $"Your refund request for order ID {purchase.PurchaseId} has been approved. " +
+                            $"The driver will come to pickup the cows.\n\n" +
+                            $"Best regards,\nAgriChoice Team";
 
             if (!string.IsNullOrEmpty(email))
             {
@@ -136,8 +139,9 @@ namespace AgriChoice.Controllers
                 );
             }
 
-            return RedirectToAction("ViewOrderDetails", new { id = purchase.PurchaseId });
+            return RedirectToAction(nameof(Purchases));
         }
+
 
 
         [HttpPost]
@@ -352,6 +356,8 @@ namespace AgriChoice.Controllers
                 purchase.DeliveryStatus = Purchase.Deliverystatus.InTransit;
                 purchase.Delivery.PickedUp = true;
                 purchase.Delivery.PickupDate = DateTime.UtcNow;
+
+
                 _context.SaveChanges();
 
                 // Send email notification to the customer
@@ -372,11 +378,39 @@ namespace AgriChoice.Controllers
                 }
 
                 return Json(new { success = true });
+            
+            
+            
             }
-
-            if (request.Pin == purchase.RefundRequest.DropOffPin)
+            
+            else if (purchase.RefundRequest != null && request.Pin == purchase.RefundRequest.DropOffPin)
             {
                 purchase.RefundRequest.Status = RefundRequest.Refundstatus.Returned;
+
+                var transaction = new Models.Transaction
+                {
+                    UserId = purchase.UserId,
+                    Amount = purchase.TotalPrice - purchase.ShippingCost, // Refund amount
+                    Type = Models.TransactionType.Credit,
+                    Date = DateTime.UtcNow,
+                    Description = $"Refund approved for Purchase ID: {purchase.PurchaseId}"
+                };
+                _context.Transactions.Add(transaction);
+
+
+                if (!string.IsNullOrEmpty(purchase.Delivery.DriverId))
+                {
+                    var driverTransaction = new Models.Transaction
+                    {
+                        UserId = purchase.Delivery.DriverId,
+                        Amount = purchase.ShippingCost * 0.8m,
+                        Type = Models.TransactionType.Credit,
+                        Date = DateTime.UtcNow,
+                        Description = $"Compensation for refund pickup for Purchase ID: {purchase.PurchaseId}"
+                    };
+                    _context.Transactions.Add(driverTransaction);
+                }
+
                 _context.SaveChanges();
 
                 return Json(new { success = true });

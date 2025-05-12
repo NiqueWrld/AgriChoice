@@ -7,8 +7,8 @@ namespace AgriChoice.Models
     {
         private string smtpHost = "smtp.gmail.com";
         private int smtpPort = 587;
-        private string smtpUser = "SMTP EMAIL";
-        private string smtpPass = "16 Degit Password";
+        private string smtpUser = "syathokoza321@gmail.com";
+        private string smtpPass = "zhzc mupb muyv trlv";
 
         public async Task SendEmailAsync(string to, string subject, string body)
         {

@@ -41,6 +41,62 @@ namespace AgriChoice.Controllers
             return View(deliveries);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StartJob(int purchaseId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var purchase = await _context.Purchases
+                .Include(p => p.Delivery)
+                .FirstOrDefaultAsync(p => p.PurchaseId == purchaseId && p.Delivery.DriverId == user.Id);
+
+            if (purchase == null || purchase.DeliveryStatus != Purchase.Deliverystatus.Scheduled)
+            {
+                return NotFound(new { success = false, message = "Job not found or already started." });
+            }
+
+            purchase.DeliveryStatus = Purchase.Deliverystatus.InTransit;
+            purchase.Delivery.PickupDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("AssignedJobs");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeclineJob(int purchaseId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var purchase = await _context.Purchases
+                .Include(p => p.Delivery)
+                .FirstOrDefaultAsync(p => p.PurchaseId == purchaseId && p.Delivery.DriverId == user.Id);
+
+            if (purchase == null || purchase.DeliveryStatus != Purchase.Deliverystatus.Scheduled)
+            {
+                return NotFound(new { success = false, message = "Job not found or cannot be declined." });
+            }
+
+            purchase.Delivery.DriverId = null; 
+            purchase.DeliveryStatus = Purchase.Deliverystatus.Scheduled;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("AssignedJobs");
+        }
+
+
+
         public async Task<IActionResult> PastJobs()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -62,21 +118,16 @@ namespace AgriChoice.Controllers
 
         public async Task<IActionResult> Wallet()
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized();
-            }
+            var userId = _userManager.GetUserId(User);
 
-            var walletBalance = await _context.Purchases
-                .Where(p => p.Delivery != null && p.Delivery.DriverId == user.Id)
-                .Include(p => p.PurchaseCows)
-                .ThenInclude(pc => pc.Cow)
-                .SelectMany(p => p.PurchaseCows)
-                .SumAsync(pc => pc.Cow.Price * 0.1m);
+            var transactions = await _context.Transactions
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.Date)
+                .ToListAsync();
 
-            ViewBag.WalletBalance = walletBalance;
-            return View();
+            ViewBag.Balance = transactions.Sum(t => t.Amount);
+
+            return View(transactions);
         }
 
         [HttpPost]

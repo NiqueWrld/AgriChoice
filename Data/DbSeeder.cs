@@ -68,26 +68,38 @@ namespace AgriChoice.Data
                 }
             }
 
-            // Seed customer user
-            string driverEmail = "driver@agri-choice.com";
-            string driverPassword = "Driver@123";
-
-            var driverUser = await userManager.FindByEmailAsync(driverEmail);
-            if (driverUser == null)
+            // Seed multiple driver users with Zulu names and unique emails
+            var drivers = new[]
             {
-                var newDriver = new IdentityUser
-                {
-                    UserName = driverEmail,
-                    Email = driverEmail,
-                    EmailConfirmed = true
-                };
+    new { Name = "Sipho Khumalo", Email = "siphok@agri-choice.com" },
+    new { Name = "Nokuthula Dlamini", Email = "nokuthulad@agri-choice.com" },
+    new { Name = "Thabo Mthembu", Email = "thabom@agri-choice.com" },
+    new { Name = "Zanele Ndlovu", Email = "zanelen@agri-choice.com" },
+    new { Name = "Sibusiso Shabalala", Email = "sibusisos@agri-choice.com" }
+};
 
-                var result = await userManager.CreateAsync(newDriver, driverPassword);
-                if (result.Succeeded)
+            string basePassword = "Driver@123";
+
+            foreach (var driver in drivers)
+            {
+                var driverUser = await userManager.FindByEmailAsync(driver.Email);
+                if (driverUser == null)
                 {
-                    await userManager.AddToRoleAsync(newDriver, "Driver");
+                    var newDriver = new IdentityUser
+                    {
+                        UserName = driver.Email,
+                        Email = driver.Email,
+                        EmailConfirmed = true
+                    };
+
+                    var result = await userManager.CreateAsync(newDriver, basePassword);
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newDriver, "Driver");
+                    }
                 }
             }
+
 
             // Seed Cow data
             if (!context.Cows.Any())

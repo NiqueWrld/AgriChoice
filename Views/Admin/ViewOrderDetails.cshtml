@@ -20,7 +20,7 @@
         </a>
     </div>
 
- 
+
     @if (Model.RefundRequest != null)
     {
         <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-6">
@@ -76,10 +76,13 @@
                     {  
                         <div class="mt-2">
                             <p class="text-sm text-gray-500">This request has already been <strong>@Model.RefundRequest.Status</strong>.</p>
-                            <button class="bg-indigo-600 text-white px-4 py-2 mt-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    onclick="openConfirmDropOffModal(@Model.PurchaseId)">
-                                Confirm DropOff
-                            </button>
+                            @if (Model.RefundRequest.Status.ToString() != "Returned")
+                            {
+                                <button class="bg-indigo-600 text-white px-4 py-2 mt-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                onclick="openConfirmDropOffModal(@Model.PurchaseId)">
+                                    Confirm DropOff
+                                </button>
+                            }
                         </div>
                     }
                 </div>
