@@ -10,7 +10,7 @@
 
     <div class="bg-white p-4 rounded-lg shadow-md mb-6">
         <h3 class="text-lg font-semibold text-gray-700">Wallet Balance</h3>
-        <p class="text-2xl font-bold text-green-600">@balance.ToString("C")</p>
+        <p class="text-2xl font-bold text-green-600">@balance.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
     </div>
 
     <div class="bg-white p-4 rounded-lg shadow-md">
@@ -32,7 +32,7 @@
                         <td class="px-4 py-2 text-sm text-gray-500">@transaction.Description</td>
                         <td class="px-4 py-2 text-sm text-gray-500">@transaction.Type</td>
                         <td class="px-4 py-2 text-sm text-right @(transaction.Amount > 0 ? "text-green-600" : "text-red-600")">
-                            @transaction.Amount.ToString("C")
+                            @transaction.Amount.ToString("C", new System.Globalization.CultureInfo("en-ZA"))
                         </td>
                     </tr>
                 }

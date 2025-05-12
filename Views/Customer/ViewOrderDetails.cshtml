@@ -87,7 +87,7 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium text-gray-500">Total Amount</dt>
-                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.TotalPrice.ToString("C")</dd>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">@Model.TotalPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</dd>
                 </div>
             </dl>
         </div>
@@ -151,7 +151,7 @@
                                 <div class="text-sm text-gray-900">@item.Cow.Breed</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                @item.Cow.Price.ToString("C")
+                                @item.Cow.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))
                             </td>
                         </tr>
                     }
@@ -162,7 +162,7 @@
                             Total
                         </td>
                         <td class="px-6 py-3 text-sm font-medium text-gray-900">
-                            @Model.TotalPrice.ToString("C")
+                            @Model.TotalPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))
                         </td>
                     </tr>
                 </tfoot>
@@ -243,18 +243,18 @@
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Subtotal</dt>
-                        <dd class="mt-1 text-sm text-gray-900">@((Model.TotalPrice - (Model.ShippingCost)).ToString("C"))</dd>
+                        <dd class="mt-1 text-sm text-gray-900">@((Model.TotalPrice - (Model.ShippingCost)).ToString("C", new System.Globalization.CultureInfo("en-ZA")))</dd>
                     </div>
                     @if (Model.ShippingCost != null)
                     {
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Delivery Fee</dt>
-                            <dd class="mt-1 text-sm text-gray-900">@Model.ShippingCost.ToString("C")</dd>
+                            <dd class="mt-1 text-sm text-gray-900">@Model.ShippingCost.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</dd>
                         </div>
                     }
                     <div>
                         <dt class="text-sm font-medium text-gray-500 font-bold">Total</dt>
-                        <dd class="mt-1 text-sm text-gray-900 font-bold">@Model.TotalPrice.ToString("C")</dd>
+                        <dd class="mt-1 text-sm text-gray-900 font-bold">@Model.TotalPrice.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</dd>
                     </div>
                 </dl>
             </div>

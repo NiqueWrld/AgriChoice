@@ -10,7 +10,7 @@ using MailKit.Search;
 
 namespace AgriChoice.Controllers
 {
-    [Authorize(Roles = "Admin")] // Restrict access to Admin role only
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly AgriChoiceContext _context;
@@ -42,6 +42,36 @@ namespace AgriChoice.Controllers
         {
             return View();
         }
+
+        public async Task<IActionResult> Reports()
+        {
+            // Total Sales
+            var totalSales = await _context.Purchases
+                .Where(p => p.PaymentStatus == Purchase.Paymentstatus.Completed)
+                .SumAsync(p => p.TotalPrice);
+
+            // Total Refunds
+            var totalRefunds = await _context.Transactions
+                .Where(t => t.Type == Models.TransactionType.Credit && t.Description.Contains("Refund"))
+                .SumAsync(t => t.Amount);
+
+            // Driver Compensation
+            var totalDriverCompensation = await _context.Transactions
+                .Where(t => t.Type == Models.TransactionType.Credit && t.Description.Contains("Compensation"))
+                .SumAsync(t => t.Amount);
+
+            // Total Transactions
+            var totalTransactions = await _context.Transactions.CountAsync();
+
+            // Pass data to the view
+            ViewBag.TotalSales = totalSales;
+            ViewBag.TotalRefunds = totalRefunds;
+            ViewBag.TotalDriverCompensation = totalDriverCompensation;
+            ViewBag.TotalTransactions = totalTransactions;
+
+            return View();
+        }
+
 
         // Add a Cow (POST)
         [HttpPost]
