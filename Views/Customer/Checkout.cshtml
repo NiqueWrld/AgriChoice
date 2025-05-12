@@ -138,7 +138,7 @@
                                             <div>
                                                 <h4 class="text-sm font-medium text-gray-900">@item.Cow.Name</h4>
                                                 <p class="text-sm text-gray-500">@item.Cow.Breed</p>
-                                                <p class="text-sm font-semibold text-indigo-600 mt-1">@item.Cow.Price.ToString("C")</p>
+                                                <p class="text-sm font-semibold text-indigo-600 mt-1">@item.Cow.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
                                             </div>
                                         </div>
                                     </div>
@@ -170,7 +170,7 @@
                                     <p class="text-xs text-gray-500">@item.Cow.Breed</p>
                                 </div>
                                 <div class="flex items-center">
-                                    <p class="text-sm font-medium text-gray-900 mr-4">@item.Cow.Price.ToString("C")</p>
+                                    <p class="text-sm font-medium text-gray-900 mr-4">@item.Cow.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
                                     <button type="button"
                                             data-id="@item.CowId"
                                             data-token="@Antiforgery.GetAndStoreTokens(Context).RequestToken"
@@ -199,15 +199,15 @@
                             </div>
                             <div class="flex justify-between py-2 border-t border-gray-200">
                                 <p class="text-base font-medium text-gray-900">Sub Total</p>
-                                <p class="text-base font-bold text-indigo-600">@Model.SubTotal.ToString("C")</p>
+                                <p class="text-base font-bold text-indigo-600">@Model.SubTotal.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
                             </div>
                             <div class="flex justify-between py-2 border-t border-gray-200">
                                 <p class="text-base font-medium text-gray-900">Shipping</p>
-                                <p class="text-base font-bold text-indigo-600">@Model.ShippingCost.ToString("C")</p>
+                                <p class="text-base font-bold text-indigo-600">@Model.ShippingCost.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
                             </div>
                             <div class="flex justify-between py-2 border-t border-gray-200">
                                 <p class="text-base font-medium text-gray-900">Total</p>
-                                <p class="text-base font-bold text-indigo-600">@Model.TotalCost.ToString("C")</p>
+                                <p class="text-base font-bold text-indigo-600">@Model.TotalCost.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</p>
                             </div>
                         </div>
 

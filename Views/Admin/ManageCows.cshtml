@@ -43,7 +43,7 @@
                             <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">@cow.Breed</td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-700">@cow.Age months</td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-700">@cow.Weight kg</td>
-                            <td class="px-6 py-4 whitespace-nowrap font-medium text-green-600">@cow.Price.ToString("C")</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-green-600">@cow.Price.ToString("C", new System.Globalization.CultureInfo("en-ZA"))</td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <div class="flex justify-center space-x-2">
                                     <a asp-action="ViewCow" asp-route-id="@cow.CowId"
