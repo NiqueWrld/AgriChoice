@@ -427,11 +427,11 @@ namespace AgriChoice.Controllers
                 };
                 _context.Transactions.Add(transaction);
 
-                if (!string.IsNullOrEmpty(purchase.Delivery.DriverId))
+                if (!string.IsNullOrEmpty(purchase.RefundRequest.DriverId))
                 {
                     var driverTransaction = new Models.Transaction
                     {
-                        UserId = requestRefund.DriverId,
+                        UserId = purchase.RefundRequest.DriverId,
                         Amount = purchase.ShippingCost * 0.8m,
                         Type = Models.TransactionType.Credit,
                         Date = DateTime.UtcNow,
