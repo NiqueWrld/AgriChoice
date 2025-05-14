@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using AgriChoice.Data;
 using Braintree;
 
-var builde = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // Get the connection string from appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("AgriChoiceContextConnection")
