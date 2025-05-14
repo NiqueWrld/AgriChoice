@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!-- Hero Section -->
+<div class="relative bg-gradient-to-r from-indigo-600 to-purple-600 h-screen flex items-center justify-center text-center text-white">
+    <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('/img/farm-hero.jpg');"></div>
+    <div class="relative z-10 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-5xl sm:text-6xl font-extrabold mb-4">Welcome to AgriChoice</h1>
+        <p class="text-lg sm:text-xl font-medium mb-8">
+            Your trusted solution for managing livestock and enhancing agricultural productivity.
+        </p>
+        <a href="/Admin/Dashboard" class="px-6 py-3 text-lg font-medium bg-yellow-400 text-indigo-900 rounded-lg shadow-md hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-300">
+            Explore Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- About Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900">About Us</h2>
+            <p class="mt-4 text-lg text-gray-600">
+                At AgriChoice, we provide cutting-edge tools to help farmers manage their livestock effectively and improve agricultural efficiency. Our mission is to empower farmers with the technology they need to succeed.
+            </p>
+        </div>
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="text-center">
+                <div class="flex items-center justify-center h-20 w-20 mx-auto bg-indigo-100 text-indigo-600 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16l-4-4m0 0l4-4m-4 4h16" />
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">Easy Management</h3>
+                <p class="mt-2 text-gray-600">Streamline livestock tracking and farm operations with our simple-to-use platform.</p>
+            </div>
+            <!-- Feature 2 -->
+            <div class="text-center">
+                <div class="flex items-center justify-center h-20 w-20 mx-auto bg-indigo-100 text-indigo-600 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 4c3.866 0 7 3.134 7 7H5c0-3.866 3.134-7 7-7z" />
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">Secure Data</h3>
+                <p class="mt-2 text-gray-600">We ensure your data is stored securely and is always accessible to you.</p>
+            </div>
+            <!-- Feature 3 -->
+            <div class="text-center">
+                <div class="flex items-center justify-center h-20 w-20 mx-auto bg-indigo-100 text-indigo-600 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h11M9 21V3m5 18h5" />
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-xl font-semibold text-gray-900">Productivity Insights</h3>
+                <p class="mt-2 text-gray-600">Gain valuable insights into your farm’s productivity and operations with our analytics tools.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900">Meet Our Team</h2>
+            <p class="mt-4 text-lg text-gray-600">
+                Our dedicated team is committed to bringing you the best tools and support for your agricultural needs.
+            </p>
+        </div>
+        <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Team Member 1 -->
+            <div class="text-center">
+                <img class="mx-auto h-24 w-24 rounded-full object-cover" src="/img/team1.jpg" alt="Team Member 1">
+                <h3 class="mt-4 text-lg font-medium text-gray-900">John Doe</h3>
+                <p class="text-sm text-gray-600">CEO & Founder</p>
+            </div>
+            <!-- Team Member 2 -->
+            <div class="text-center">
+                <img class="mx-auto h-24 w-24 rounded-full object-cover" src="/img/team2.jpg" alt="Team Member 2">
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Jane Smith</h3>
+                <p class="text-sm text-gray-600">CTO</p>
+            </div>
+            <!-- Team Member 3 -->
+            <div class="text-center">
+                <img class="mx-auto h-24 w-24 rounded-full object-cover" src="/img/team3.jpg" alt="Team Member 3">
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Alan Brown</h3>
+                <p class="text-sm text-gray-600">Lead Developer</p>
+            </div>
+            <!-- Team Member 4 -->
+            <div class="text-center">
+                <img class="mx-auto h-24 w-24 rounded-full object-cover" src="/img/team4.jpg" alt="Team Member 4">
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Emily White</h3>
+                <p class="text-sm text-gray-600">Marketing Manager</p>
+            </div>
+        </div>
+    </div>
+</section>
