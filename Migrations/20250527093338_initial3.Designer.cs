@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AgriChoice.Migrations
 {
     [DbContext(typeof(AgriChoiceContext))]
-    [Migration("20250512104458_initial4")]
-    partial class initial4
+    [Migration("20250527093338_initial3")]
+    partial class initial3
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,9 @@ namespace AgriChoice.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("SubTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Tax")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("TotalCost")

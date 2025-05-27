@@ -52,7 +52,9 @@ namespace AgriChoice.Controllers
         // GET: Customer/BrowseCows
         public IActionResult BrowseCows(string search, string availability)
         {
-            var cows = _context.Cows.AsQueryable();
+            var cows = _context.Cows
+                .Where(c => c.IsAvailable == true)
+                .AsQueryable();
 
             // Filter by search term
             if (!string.IsNullOrEmpty(search))
@@ -60,15 +62,9 @@ namespace AgriChoice.Controllers
                 cows = cows.Where(c => c.Breed.Contains(search) || c.Description.Contains(search));
             }
 
-            // Filter by availability
-            if (!string.IsNullOrEmpty(availability))
-            {
-                bool isAvailable = availability == "true";
-                cows = cows.Where(c => c.IsAvailable == isAvailable);
-            }
-
             return View(cows.ToList());
         }
+
 
         public IActionResult MyOrders()
         {
@@ -264,8 +260,9 @@ namespace AgriChoice.Controllers
                 cart.Items.Add(cartItem);
 
                 cart.SubTotal = cart.Items.Sum(item => item.Cow.Price);
+                cart.Tax = cart.SubTotal * 0.15m;
                 cart.ShippingCost = await cart.CalculateShippingCostAsync();
-                cart.TotalCost = cart.SubTotal + cart.ShippingCost;
+                cart.TotalCost = cart.SubTotal + cart.ShippingCost + cart.Tax;
 
                 // Save changes to the database
                 await _context.SaveChangesAsync();
@@ -351,8 +348,9 @@ namespace AgriChoice.Controllers
             cart.Items.Remove(itemToRemove); // Also remove from in-memory collection
 
             cart.SubTotal = cart.Items.Sum(item => item.Cow.Price);
+            cart.Tax = cart.SubTotal * 0.15m;
             cart.ShippingCost = cart.Items.Count * 500;
-            cart.TotalCost = cart.SubTotal + cart.ShippingCost;
+            cart.TotalCost = cart.SubTotal + cart.ShippingCost + cart.Tax;
 
             await _context.SaveChangesAsync();
 
@@ -376,7 +374,7 @@ namespace AgriChoice.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
         {
-            try
+           try
             {
                 if (request == null || string.IsNullOrEmpty(request.PaymentMethodNonce))
                 {
@@ -434,6 +432,7 @@ namespace AgriChoice.Controllers
                     UserId = userId,
                     ShippingCost = cart.ShippingCost,
                     TotalPrice = cart.TotalCost,
+                    Tax = cart.Tax,
                     PurchaseDate = DateTime.UtcNow,
                     PaymentStatus = Purchase.Paymentstatus.Completed,
                     DeliveryStatus = Purchase.Deliverystatus.Scheduled,
@@ -472,6 +471,7 @@ namespace AgriChoice.Controllers
                     await _context.SaveChangesAsync(); // Ensure PurchaseId is generated here
 
                     cart.TotalCost = 0;
+                    cart.Tax = 0;
                     cart.SubTotal = 0;
                     cart.ShippingCost = 0;
                     _context.CartItems.RemoveRange(cart.Items);
@@ -519,13 +519,24 @@ namespace AgriChoice.Controllers
                 }
                 else
                 {
+                    Console.Beep();
                     return BadRequest(new { success = false, message = result.Message });
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = ex.Message });
+                var errorMessage = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    errorMessage += " | Inner: " + ex.InnerException.Message;
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage += " | Inner2: " + ex.InnerException.InnerException.Message;
+                    }
+                }
+                return StatusCode(500, new { success = false, message = errorMessage });
             }
+
         }
 
 

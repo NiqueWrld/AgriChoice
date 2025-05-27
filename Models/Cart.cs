@@ -10,6 +10,7 @@ namespace AgriChoice.Models
 
         public decimal ShippingCost { get; set; }
         public decimal SubTotal { get; set; }
+        public decimal Tax { get; set; }
         public decimal TotalCost { get; set; }
 
         [Required]

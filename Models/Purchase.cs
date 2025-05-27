@@ -27,6 +27,8 @@ namespace AgriChoice.Models
 
         [Required]
         public decimal ShippingCost { get; set; }
+        [Required]
+        public decimal Tax { get; set; }
 
         [Required]
         public decimal TotalPrice { get; set; }

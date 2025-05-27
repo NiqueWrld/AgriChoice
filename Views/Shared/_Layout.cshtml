@@ -146,6 +146,10 @@
                     <span class="font-medium" id="cartSubtotal">R0.00</span>
                 </div>
                 <div class="flex justify-between mb-4">
+                    <span class="text-gray-600">Tax</span>
+                    <span class="font-medium" id="cartTax">R0.00</span>
+                </div>
+                <div class="flex justify-between mb-4">
                     <span class="text-gray-600">Shipping</span>
                     <span class="font-medium" id="cartShipping">R0.00</span>
                 </div>
@@ -205,17 +209,23 @@
                                     currency: 'ZAR'
                                 });
 
+                        const taxFee = data.taxFee.toLocaleString('en-ZA', {
+                                        style: 'currency',
+                                        currency: 'ZAR'
+                                    });
+
                     const shippingFee = data.shippingFee.toLocaleString('en-ZA', {
                                     style: 'currency',
                                     currency: 'ZAR'
                                 });
 
-                    const total = (data.shippingFee +  data.subTotal).toLocaleString('en-ZA', {
+                        const total = (data.shippingFee +  data.subTotal + data.taxFee).toLocaleString('en-ZA', {
                                     style: 'currency',
                                     currency: 'ZAR'
                                 });
 
                     document.getElementById("cartSubtotal").innerHTML = subTotal;
+                                document.getElementById("cartTax").innerHTML = taxFee;
                     document.getElementById("cartShipping").innerHTML = shippingFee;
                     document.getElementById("cartTotal").innerHTML = total;
 

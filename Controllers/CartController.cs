@@ -43,6 +43,7 @@ namespace AgriChoice.Controllers
                     CowPrice = item.Cow.Price
                 }),
                 SubTotal = cart.SubTotal,
+                TaxFee = cart.SubTotal * 0.15m,
                 ShippingFee = cart.ShippingCost,
                 TotalItems = cart.TotalCost
             };
