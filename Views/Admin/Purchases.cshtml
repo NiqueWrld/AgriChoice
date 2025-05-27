@@ -63,6 +63,9 @@
                             Customer
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Driver
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Cow
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -98,6 +101,25 @@
                                     <div class="text-xs text-gray-500">
                                         @purchase.UserId
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if (purchase.Delivery != null && !string.IsNullOrEmpty(purchase.Delivery.DriverId))
+                                    {
+                                        <div class="text-sm text-gray-900">
+                                            @(ViewBag.DriverUsernames != null && ViewBag.DriverUsernames.ContainsKey(purchase.Delivery.DriverId)
+                                                                            ? ViewBag.DriverUsernames[purchase.Delivery.DriverId]
+                                                                            : "Driver name unavailable")
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                @purchase.Delivery.DriverId
+                            </div>
+                                                        }
+                                    else
+                                    {
+                                        <div class="text-sm text-gray-500 italic">
+                                            No driver assigned
+                                        </div>
+                                    }
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if (purchase.PurchaseCows != null && purchase.PurchaseCows.Any())

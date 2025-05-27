@@ -134,10 +134,12 @@ namespace AgriChoice.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ValidatePin([FromBody] PinRequest request)
         {
-            var purchase = _context.Purchases
-                .Include(p => p.RefundRequest)
-                .Include(p => p.Delivery)
-                .FirstOrDefault(p => p.PurchaseId == request.PurchaseId);
+            var purchase = await _context.Purchases
+        .Include(p => p.RefundRequest)
+            .ThenInclude(r => r.RefundRequestCows)
+                .ThenInclude(rc => rc.Cow)
+        .Include(p => p.Delivery)
+        .FirstOrDefaultAsync(p => p.PurchaseId == request.PurchaseId);
 
             if (purchase == null)
             {
@@ -157,6 +159,18 @@ namespace AgriChoice.Controllers
             {
                 purchase.DeliveryStatus = Purchase.Deliverystatus.Delivered;
                 purchase.Delivery.DeliveryCompletedDate = DateTime.UtcNow;
+              
+                var transaction1 = new Transaction
+                {
+                    UserId = purchase.Delivery.DriverId,
+                    Amount = purchase.ShippingCost * 0.80m,
+                    Type = Models.TransactionType.Credit,
+                    Date = DateTime.UtcNow,
+                    Description = $"Purchase ID: {purchase.PurchaseId}"
+                };
+
+                _context.Transactions.Add(transaction1);
+
                 _context.SaveChanges();
 
                 var emailSubject = "Order Delivered Successfully";
@@ -170,10 +184,42 @@ namespace AgriChoice.Controllers
             {
                 purchase.RefundRequest.PickedUp = true;
                 purchase.RefundRequest.CollectionCompletedDate = DateTime.UtcNow;
-                _context.SaveChanges();
+
+                // Calculate refund amount for the specific cows being returned
+                decimal refundAmount = 0;
+
+                if (purchase.RefundRequest.RefundRequestCows != null && purchase.RefundRequest.RefundRequestCows.Any())
+                {
+                    foreach (var refundCow in purchase.RefundRequest.RefundRequestCows)
+                    {
+                        // Find the cow and mark it as available again
+                        var cow = await _context.Cows.FindAsync(refundCow.CowId);
+                        if (cow != null)
+                        {
+                            cow.IsAvailable = true;
+
+                            // Add the cow's price to the refund amount
+                            refundAmount += cow.Price;
+                        }
+                    }
+                }
+
+                // Create transaction to refund the customer
+                var customerRefundTransaction = new Transaction
+                {
+                    UserId = purchase.UserId,
+                    Amount = refundAmount, // Refund the price of the cows
+                    Type = Models.TransactionType.Credit,
+                    Date = DateTime.UtcNow,
+                    Description = $"Refund for returned cow(s) - Purchase ID: {purchase.PurchaseId}"
+                };
+                _context.Transactions.Add(customerRefundTransaction);
+
+
+                await _context.SaveChangesAsync();
 
                 var emailSubject = "Refund Item Picked Up";
-                var emailBody = $"Dear {user.UserName},\n\nYour refund item for order ID {purchase.PurchaseId} has been picked up successfully. We will notify you once it's processed.\n\nBest regards,\nAgriChoice Team";
+                var emailBody = $"Dear {user.UserName},\n\nYour refund item for order ID {purchase.PurchaseId} has been picked up successfully. A refund of {refundAmount:C} has been issued to your account. We will notify you once it's fully processed.\n\nBest regards,\nAgriChoice Team";
 
                 await emailSender.SendEmailAsync(email, emailSubject, emailBody);
                 return Json(new { success = true });
@@ -182,6 +228,18 @@ namespace AgriChoice.Controllers
             if (request.Pin == purchase.RefundRequest?.DropOffPin)
             {
                 purchase.RefundRequest.CollectionCompletedDate = DateTime.UtcNow;
+
+                // Create transaction for driver compensation
+                var driverCompensationTransaction = new Transaction
+                {
+                    UserId = purchase.RefundRequest.DriverId,
+                    Amount = purchase.ShippingCost * 0.40m,
+                    Type = Models.TransactionType.Credit,
+                    Date = DateTime.UtcNow,
+                    Description = $"Compensation for refund pickup - Purchase ID: {purchase.PurchaseId}"
+                };
+                _context.Transactions.Add(driverCompensationTransaction);
+
                 _context.SaveChanges();
 
                 var emailSubject = "Refund Item Delivered";

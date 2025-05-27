@@ -235,19 +235,36 @@
         modal.classList.add("hidden");
     }
 
-    document.getElementById("getLocationButton").addEventListener("click", function () {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const coords = `${position.coords.latitude}, ${position.coords.longitude}`;
+   document.getElementById("getLocationButton").addEventListener("click", function () {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            try {
+                // Convert coordinates to address using Nominatim (OpenStreetMap)
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+                const data = await response.json();
+                
+                // Format the address from the response
+                const address = data.display_name;
+                
+                closeLocationModal();
+                await submitLocation(address);
+            } catch (error) {
+                console.error("Error getting address from coordinates:", error);
+                // Fallback to raw coordinates if geocoding fails
+                const coords = `${lat}, ${lng}`;
                 closeLocationModal();
                 await submitLocation(coords);
-            }, (error) => {
-                alert("Unable to retrieve location. Please input your address manually.");
-            });
-        } else {
-            alert("Geolocation is not supported by your browser.");
-        }
-    });
+            }
+        }, (error) => {
+            alert("Unable to retrieve location. Please input your address manually.");
+        });
+    } else {
+        alert("Geolocation is not supported by your browser.");
+    }
+});
 
     document.getElementById("confirmAddressButton").addEventListener("click", async function () {
         const address = document.getElementById("manualAddress").value;

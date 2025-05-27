@@ -102,7 +102,11 @@ namespace AgriChoice.Controllers
         [HttpGet]
         public async Task<IActionResult> RequestRefund(int id)
         {
-            var purchase = await _context.Purchases.FindAsync(id);
+            var purchase = await _context.Purchases
+                .Include(p => p.PurchaseCows)
+                .ThenInclude(p => p.Cow)
+                .FirstOrDefaultAsync(p => p.PurchaseId == id);
+
             if (purchase == null)
             {
                 return NotFound();
@@ -111,18 +115,46 @@ namespace AgriChoice.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RequestRefund(RefundRequest model, IFormFile uploadedFile)
+        public async Task<IActionResult> RequestRefund(int PurchaseId, string Reason, string AdditionalComments,
+    List<int> SelectedCowIds, Dictionary<int, string> CowConditions, Dictionary<int, string> CowReasons,
+    IFormFile uploadedFile)
         {
+            // Validate input
+            if (SelectedCowIds == null || !SelectedCowIds.Any())
+            {
+                ModelState.AddModelError("", "Please select at least one cow to return.");
+                var purchase = await _context.Purchases
+                    .Include(p => p.PurchaseCows)
+                    .ThenInclude(p => p.Cow)
+                    .FirstOrDefaultAsync(p => p.PurchaseId == PurchaseId);
+
+                return View(purchase);
+            }
+
             var currentUserId = _userManager.GetUserId(User);
 
             var order = await _context.Purchases
-                .FirstOrDefaultAsync(o => o.PurchaseId == model.PurchaseId);
+                .Include(p => p.PurchaseCows)
+                .ThenInclude(p => p.Cow)
+                .FirstOrDefaultAsync(o => o.PurchaseId == PurchaseId);
 
             if (order == null)
             {
                 return NotFound("Order not found.");
             }
 
+            // Create the RefundRequest entity
+            var refundRequest = new RefundRequest
+            {
+                PurchaseId = PurchaseId,
+                UserId = currentUserId,
+                Reason = Reason,
+                AdditionalComments = AdditionalComments,
+                RequestedAt = DateTime.UtcNow,
+                Status = RefundRequest.Refundstatus.Pending
+            };
+
+            // Process file upload
             if (uploadedFile != null && uploadedFile.Length > 0)
             {
                 using (var memoryStream = new MemoryStream())
@@ -130,26 +162,54 @@ namespace AgriChoice.Controllers
                     uploadedFile.CopyTo(memoryStream);
                     byte[] imageBytes = memoryStream.ToArray();
                     string base64Image = Convert.ToBase64String(imageBytes);
-
-                    // Optionally prepend the data URI scheme if you need to render it directly in HTML
-                    model.UploadedFileUrl = $"data:{uploadedFile.ContentType};base64,{base64Image}";
+                    refundRequest.UploadedFileUrl = $"data:{uploadedFile.ContentType};base64,{base64Image}";
                 }
             }
 
+            // Generate random PINs
             Random random = new Random();
-            model.UserId = currentUserId;
-            model.RequestedAt = DateTime.UtcNow;
-            model.DropOffPin = random.Next(1000, 10000);
-            model.PickOffPin = random.Next(1000, 10000);
-            model.Status = RefundRequest.Refundstatus.Pending;
+            refundRequest.DropOffPin = random.Next(1000, 10000);
+            refundRequest.PickOffPin = random.Next(1000, 10000);
 
-            _context.RefundRequests.Add(model);
+            // Create RefundRequestCow entities for each selected cow
+            foreach (var cowId in SelectedCowIds)
+            {
+                // Verify the cow exists in the purchase
+                if (!order.PurchaseCows.Any(pc => pc.CowId == cowId))
+                {
+                    continue; // Skip if cow is not part of the purchase
+                }
+
+                var refundRequestCow = new RefundRequestCow
+                {
+                    CowId = cowId,
+                    RefundRequest = refundRequest
+                };
+
+                // Add cow-specific details if provided
+                if (CowConditions != null && CowConditions.ContainsKey(cowId))
+                {
+                    refundRequestCow.Condition = CowConditions[cowId];
+                }
+
+                if (CowReasons != null && CowReasons.ContainsKey(cowId))
+                {
+                    refundRequestCow.ReturnReason = CowReasons[cowId];
+                }
+
+                refundRequest.RefundRequestCows.Add(refundRequestCow);
+            }
+
+            // Save to database
+            _context.RefundRequests.Add(refundRequest);
             await _context.SaveChangesAsync();
 
-            order.RefundRequest = model;
+            // Associate with order
+            order.RefundRequest = refundRequest;
+            order.RefundRequestId = refundRequest.RefundRequestId;
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("ViewOrderDetails", new { id = model.PurchaseId });
+            return RedirectToAction("ViewOrderDetails", new { id = PurchaseId });
         }
 
         [HttpPost]

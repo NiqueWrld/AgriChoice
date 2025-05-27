@@ -28,5 +28,26 @@ public class AgriChoiceContext : IdentityDbContext<IdentityUser>
     {
         base.OnModelCreating(builder);
 
+        // Configure the one-to-one relationship between Purchase and RefundRequest
+        builder.Entity<RefundRequest>()
+            .HasOne(r => r.Purchase)
+            .WithOne(p => p.RefundRequest)
+            .HasForeignKey<RefundRequest>(r => r.PurchaseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure the many-to-many relationship between RefundRequest and Cow
+        builder.Entity<RefundRequestCow>()
+            .HasKey(rc => new { rc.RefundRequestId, rc.CowId });
+
+        builder.Entity<RefundRequestCow>()
+            .HasOne(rc => rc.RefundRequest)
+            .WithMany(r => r.RefundRequestCows)
+            .HasForeignKey(rc => rc.RefundRequestId);
+
+        builder.Entity<RefundRequestCow>()
+            .HasOne(rc => rc.Cow)
+            .WithMany()
+            .HasForeignKey(rc => rc.CowId);
+
     }
 }

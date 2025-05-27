@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using AgriChoice.Data;
 using AgriChoice.Models;
-using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using Microsoft.IdentityModel.Tokens;
 using Braintree;
 using MailKit.Search;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 
 namespace AgriChoice.Controllers
 {
@@ -14,10 +15,12 @@ namespace AgriChoice.Controllers
     public class AdminController : Controller
     {
         private readonly AgriChoiceContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public AdminController(AgriChoiceContext context)
+        public AdminController(AgriChoiceContext context , UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // Dashboard
@@ -114,14 +117,15 @@ namespace AgriChoice.Controllers
 
         public IActionResult ViewOrderDetails(int id)
         {
-
             var order = _context.Purchases
-               .Include(o => o.RefundRequest)
-               .Include(o => o.Review)
-               .Include(o => o.Delivery)
-               .Include(o => o.PurchaseCows)
-               .ThenInclude(o => o.Cow)
-               .FirstOrDefault(o => o.PurchaseId == id);
+                .Include(o => o.RefundRequest)
+                    .ThenInclude(r => r.RefundRequestCows)
+                        .ThenInclude(rc => rc.Cow)
+                .Include(o => o.Review)
+                .Include(o => o.Delivery)
+                .Include(o => o.PurchaseCows)
+                    .ThenInclude(o => o.Cow)
+                .FirstOrDefault(o => o.PurchaseId == id);
 
             if (order == null)
             {
@@ -291,6 +295,24 @@ namespace AgriChoice.Controllers
 
 
             var freeDriversList = freeDrivers.ToList();
+
+            // In your controller action
+            var driverIds = purchases.Where(p => p.Delivery != null && !string.IsNullOrEmpty(p.Delivery.DriverId))
+                                     .Select(p => p.Delivery.DriverId)
+                                     .Distinct()
+                                     .ToList();
+
+            var driverUsernames = new Dictionary<string, string>();
+            foreach (var driverId in driverIds)
+            {
+                var driver = await _userManager.FindByIdAsync(driverId);
+                if (driver != null)
+                {
+                    driverUsernames[driverId] = driver.UserName;
+                }
+            }
+
+            ViewBag.DriverUsernames = driverUsernames;
 
             ViewBag.Drivers = freeDriversList;
 

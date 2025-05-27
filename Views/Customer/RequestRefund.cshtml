@@ -9,9 +9,74 @@
 
     <form asp-action="RequestRefund" method="post" enctype="multipart/form-data" class="space-y-6">
         <input type="hidden" name="PurchaseId" value="@Model.PurchaseId" />
+        <input type="hidden" name="UserId" value="@Model.UserId" />
+
+        <!-- Cow Selection Section -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-3">Select Cow(s) to Return <span class="text-red-600">*</span></label>
+
+            @if (Model.PurchaseCows != null && Model.PurchaseCows.Any())
+            {
+                <div class="space-y-3" id="cow-selection-container">
+                    @foreach (var purchaseCow in Model.PurchaseCows)
+                    {
+                        <div class="border border-gray-200 rounded-md hover:bg-gray-50 overflow-hidden cow-selection-item">
+                            <div class="flex items-start p-3">
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox" id="cow-@purchaseCow.CowId" name="SelectedCowIds" value="@purchaseCow.CowId"
+                                           class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cow-checkbox"
+                                           onchange="toggleCowDetails(this)">
+                                </div>
+                                <label for="cow-@purchaseCow.CowId" class="ml-3 flex-grow cursor-pointer">
+                                    <div class="flex items-center">
+                                        @if (!string.IsNullOrEmpty(purchaseCow.Cow?.ImageUrl))
+                                        {
+                                            <img src="@purchaseCow.Cow.ImageUrl" alt="@purchaseCow.Cow.Breed" class="h-16 w-16 object-cover rounded-md mr-4">
+                                        }
+                                        <div>
+                                            <p class="font-medium text-gray-900">
+                                                @(string.IsNullOrEmpty(purchaseCow.Cow?.Name) ? purchaseCow.Cow?.Breed : purchaseCow.Cow?.Name)
+                                            </p>
+                                            <p class="text-sm text-gray-500">ID: @purchaseCow.CowId</p>
+                                            <p class="text-sm text-gray-500">Breed: @purchaseCow.Cow?.Breed</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Per-cow details (hidden by default) -->
+                            <div class="hidden p-3 bg-gray-50 border-t border-gray-200 cow-details" id="details-@purchaseCow.CowId">
+                                <div class="mb-3">
+                                    <label for="condition-@purchaseCow.CowId" class="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                                    <select id="condition-@purchaseCow.CowId" name="CowConditions[@purchaseCow.CowId]" disabled
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 cow-condition">
+                                        <option value="">-- Select condition --</option>
+                                        <option value="Healthy">Healthy</option>
+                                        <option value="Minor Issues">Minor Issues</option>
+                                        <option value="Sick">Sick</option>
+                                        <option value="Injured">Injured</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="reason-@purchaseCow.CowId" class="block text-sm font-medium text-gray-700 mb-1">Specific Reason</label>
+                                    <textarea id="reason-@purchaseCow.CowId" name="CowReasons[@purchaseCow.CowId]" rows="2" disabled
+                                      class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none cow-reason"
+                                      placeholder="Specific reason for returning this cow..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-red-500">No cows found in this purchase.</p>
+            }
+        </div>
 
         <div>
-            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Return/Replacement <span class="text-red-600">*</span></label>
+            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">General Reason for Return <span class="text-red-600">*</span></label>
             <select id="reason" name="Reason" required
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                 <option value="">-- Select a reason --</option>
@@ -23,7 +88,6 @@
                 <option value="Animal Was Not Delivered">Animal Was Not Delivered</option>
                 <option value="Other">Other</option>
             </select>
-
         </div>
 
         <div>
@@ -46,3 +110,53 @@
         </div>
     </form>
 </div>
+
+<script>
+    // Toggle cow-specific details when checkbox is clicked
+    function toggleCowDetails(checkbox) {
+        const cowId = checkbox.value;
+        const detailsDiv = document.getElementById(`details-${cowId}`);
+        const conditionSelect = document.getElementById(`condition-${cowId}`);
+        const reasonTextarea = document.getElementById(`reason-${cowId}`);
+
+        if (checkbox.checked) {
+            detailsDiv.classList.remove('hidden');
+            conditionSelect.disabled = false;
+            reasonTextarea.disabled = false;
+            conditionSelect.required = true;
+        } else {
+            detailsDiv.classList.add('hidden');
+            conditionSelect.disabled = true;
+            reasonTextarea.disabled = true;
+            conditionSelect.required = false;
+        }
+    }
+
+    // Add validation to ensure at least one cow is selected
+    document.querySelector('form').addEventListener('submit', function(event) {
+        const selectedCows = document.querySelectorAll('input[name="SelectedCowIds"]:checked');
+        if (selectedCows.length === 0) {
+            event.preventDefault();
+            alert('Please select at least one cow to return.');
+            return;
+        }
+
+        // Validate that all selected cows have conditions
+        let valid = true;
+        selectedCows.forEach(checkbox => {
+            const cowId = checkbox.value;
+            const condition = document.getElementById(`condition-${cowId}`);
+            if (!condition.value) {
+                valid = false;
+                condition.classList.add('border-red-500');
+            } else {
+                condition.classList.remove('border-red-500');
+            }
+        });
+
+        if (!valid) {
+            event.preventDefault();
+            alert('Please specify the condition for all selected cows.');
+        }
+    });
+</script>

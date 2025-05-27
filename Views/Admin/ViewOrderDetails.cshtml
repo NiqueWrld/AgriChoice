@@ -37,9 +37,11 @@
             <!-- Refund Request Details -->
             <div class="mt-4 bg-white border border-gray-200 rounded-md p-4">
                 <h3 class="text-lg font-medium text-gray-900 mb-3">Refund/Return Request Details</h3>
-                <dl class="grid grid-cols-1 gap-y-4">
+
+                <!-- General Refund Information -->
+                <dl class="grid grid-cols-1 gap-y-4 mb-6">
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">Reason</dt>
+                        <dt class="text-sm font-medium text-gray-500">General Reason</dt>
                         <dd class="mt-1 text-sm text-gray-900">@Model.RefundRequest.Reason</dd>
                     </div>
                     @if (!string.IsNullOrEmpty(Model.RefundRequest.AdditionalComments))
@@ -49,17 +51,71 @@
                             <dd class="mt-1 text-sm text-gray-900">@Model.RefundRequest.AdditionalComments</dd>
                         </div>
                     }
-                    @if (!string.IsNullOrEmpty(Model.RefundRequest.UploadedFileUrl))
-                    {
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Uploaded Proof</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                <img src="@Model.RefundRequest.UploadedFileUrl" alt="Uploaded Proof" class="max-w-full h-auto rounded shadow" />
-                            </dd>
-                        </div>
-
-                    }
                 </dl>
+
+                <!-- Cows Being Returned -->
+                <div class="mb-6">
+                    <h4 class="text-base font-medium text-gray-700 mb-2">Cows Selected for Return</h4>
+                    @if (Model.RefundRequest.RefundRequestCows != null && Model.RefundRequest.RefundRequestCows.Any())
+                    {
+                        <div class="space-y-4 border border-gray-200 rounded-md p-4">
+                            @foreach (var refundCow in Model.RefundRequest.RefundRequestCows)
+                            {
+                                <div class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
+                                    <div class="flex items-start">
+                                        @if (!string.IsNullOrEmpty(refundCow.Cow?.ImageUrl))
+                                        {
+                                            <img src="@refundCow.Cow.ImageUrl" alt="@refundCow.Cow.Breed" class="h-16 w-16 object-cover rounded-md mr-4">
+                                        }
+                                        <div class="flex-1">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <p class="font-medium text-gray-900">
+                                                        @(string.IsNullOrEmpty(refundCow.Cow?.Name) ? refundCow.Cow?.Breed : refundCow.Cow?.Name)
+                                                    </p>
+                                                    <p class="text-sm text-gray-500">ID: @refundCow.CowId</p>
+                                                    <p class="text-sm text-gray-500">Breed: @refundCow.Cow?.Breed</p>
+                                                </div>
+                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                                                    @(refundCow.Processed ? "Processed" : "Pending")
+                                                </span>
+                                            </div>
+
+                                            @if (!string.IsNullOrEmpty(refundCow.Condition))
+                                            {
+                                                <div class="mt-2">
+                                                    <p class="text-sm font-medium text-gray-700">Condition:</p>
+                                                    <p class="text-sm text-gray-600">@refundCow.Condition</p>
+                                                </div>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(refundCow.ReturnReason))
+                                            {
+                                                <div class="mt-2">
+                                                    <p class="text-sm font-medium text-gray-700">Specific Reason:</p>
+                                                    <p class="text-sm text-gray-600">@refundCow.ReturnReason</p>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-sm text-gray-500 italic">No specific cows selected for return.</p>
+                    }
+                </div>
+
+                <!-- Proof Image -->
+                @if (!string.IsNullOrEmpty(Model.RefundRequest.UploadedFileUrl))
+                {
+                    <div class="mb-4">
+                        <h4 class="text-base font-medium text-gray-700 mb-2">Uploaded Proof</h4>
+                        <img src="@Model.RefundRequest.UploadedFileUrl" alt="Uploaded Proof" class="max-w-full h-auto rounded shadow" />
+                    </div>
+                }
 
                 <!-- Admin Action Buttons -->
                 <div class="mt-6 flex gap-3">
@@ -73,13 +129,13 @@
                         </form>
                     }
                     else
-                    {  
+                    {
                         <div class="mt-2">
                             <p class="text-sm text-gray-500">This request has already been <strong>@Model.RefundRequest.Status</strong>.</p>
                             @if (Model.RefundRequest.Status.ToString() != "Returned")
                             {
                                 <button class="bg-indigo-600 text-white px-4 py-2 mt-2 rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                onclick="openConfirmDropOffModal(@Model.PurchaseId)">
+                                        onclick="openConfirmDropOffModal(@Model.PurchaseId)">
                                     Confirm DropOff
                                 </button>
                             }
@@ -89,21 +145,6 @@
             </div>
         </div>
     }
-    else
-    {
-        <div class="mt-6 bg-gray-50 border-l-4 border-gray-200 p-4 rounded-md mb-6">
-            <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M2 12h2m16 0h2m-6-6h6m-6 12h6M2 6h6m-6 12h6" />
-                </svg>
-                <div>
-                    <p class="text-sm font-medium text-gray-700">No Return/Refund Requested</p>
-                    <p class="text-sm text-gray-600">There is no return or refund request for this order.</p>
-                </div>
-            </div>
-        </div>
-    }
-
 
     <!-- Order Summary Card -->
     <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
